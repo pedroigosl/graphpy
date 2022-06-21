@@ -35,3 +35,16 @@ print(cl.get_id())
 cl.set_id(9)
 
 print(crass.get_id())
+
+a = set()
+
+if a:
+    print("A IS TRUE")
+
+b = set()
+print(len(b))
+
+
+c = 0.0
+if c or c == 0:
+    print("fsdgsfgs")

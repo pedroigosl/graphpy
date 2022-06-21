@@ -1,8 +1,9 @@
-from typing import List, Set, Tuple, Any, Optional
+from typing import List, Set, Tuple, Any, Union
 from __future__ import annotations
 import logging
 import warnings
 import time
+import copy
 
 # Log configs
 log_date = str(time.strftime("%d-%m-%y_%H:%M:%S"))
@@ -20,8 +21,14 @@ warnings.warn(warning, ImportWarning)
 def time_flag():
     return str(time.strftime("%d-%m-%y_%H:%M:%S"))
 
+
+
+# =============================================================================
 class Node():
-    def __init__(self, id: int, data: Any = None, flag: Any = None, edges: Set[Edge] = None):
+    def __init__(self, id: int, 
+                 data: Any = None, 
+                 flag: Union[int, float, str] = None, 
+                 edges: Set[Edge] = set()):
         # int
         self._id = id
         # your object
@@ -31,7 +38,7 @@ class Node():
         # set
         self.edges = edges
         
-    def __eq__(self, node):
+    def __eq__(self, node: Node):
         return isinstance(node, Node) and self.id == node.id
     
     def __hash__(self):
@@ -44,7 +51,7 @@ class Node():
     def get_id(self):
         return self._id
     
-    def set_data(self, data: Any) -> Any:
+    def set_data(self, data: Any):
         self.data = data
         return self.data
         
@@ -55,7 +62,7 @@ class Node():
             warnings.warn(warning, RuntimeWarning)
         return self.data
         
-    def set_flag(self, flag: Any):
+    def set_flag(self, flag: Union[int, float, str]):
         self.flag = flag
         return self.flag
         
@@ -67,18 +74,18 @@ class Node():
 
 
 class Edge():
-    def __init__(self, node: Node, weight: int = 0):
+    def __init__(self, node: Node, weight: Union[int, float] = 0):
         self.node = node
         self.weight = weight
         
-    def __eq__(self, edge):
+    def __eq__(self, edge: Edge):
         eq = isinstance(edge, Edge) and self.node == edge.node
         return eq
     
     def __hash__(self):
         return hash(self.node)
     
-    def set_weight(self, weight):
+    def set_weight(self, weight: int):
         self.weight = weight
     
     def get_weight(self):
@@ -90,23 +97,24 @@ class Graph():
     logging.basicConfig(filename=log_name, filemode='w', level=logging.DEBUG)
     
     # Each graph has a specific class id for logging purposes
-    graph_id = -1
+    graph_count = 0
     
+    # True by standard, but can be toggled for performance
     check_graph_at_initialization = True
     
-    def __init__(self, root: Optional[int] = None, 
-                nodes: Optional[Set[Node]] = None, 
-                weighted = False, 
-                reflexive = False, 
-                symmetric = False, 
-                transitive = False):
+    def __init__(self, root: int = None, 
+                nodes: Set[Node] = set(), 
+                weighted: bool = False, 
+                reflexive: bool = False, 
+                symmetric: bool = False, 
+                transitive: bool = False):
     
         # Sets graph id
         self.graph_id = self.set_graph_id()
         
         self.root = root
-        self.nodes = set()
-        self.last_id = 0
+        self.nodes = nodes
+        self.size = len(self.nodes)
         
         # Graph characteristics
         self.weighted = weighted
@@ -128,12 +136,12 @@ class Graph():
     
     @classmethod        
     def set_graph_id(cls):
-        cls.graph_id += 1
-        return cls.graph_id - 1
+        cls.graph_count += 1
+        return cls.graph_count - 1
     
     @classmethod
     def del_graph_id(cls):
-        cls.graph_id -= 1
+        cls.graph_count -= 1
         
     # Internal method
     @staticmethod    
@@ -142,7 +150,7 @@ class Graph():
         root = graph.root
         nodes = graph.nodes
         
-        last_id = graph.last_id
+        size = graph.size
         
         weighted = graph.weighted
         if not isinstance(weighted, bool):
@@ -158,13 +166,13 @@ class Graph():
             return False
         
         if not nodes:
-            if root:
+            if root or root == 0:
                 # broken graph, has root, but no node
                 return False
             # Empty graph is a valid graph  
             return True
         
-        if root:
+        if root or root == 0:
             if not isinstance(root, int):
                 return False
             root_node = Node(root)
@@ -173,21 +181,29 @@ class Graph():
                     # Broken graph, root isn't one of its nodes
                     return False
             except:
-                #node typing wrong
+                #node typing wrong, but still shouldn't crash here
                 return False
         if not isinstance(nodes, set):
             return False
-        
-        for id, node in enumerate(nodes):
+        for node in nodes:
+            
             is_node = isinstance(node, Node)
             id_int = isinstance(node.id, int)
             id_positive = node.id >= 0
-            id_range = node.id < last_id
-            if not (is_node and
-                    id_int and
-                    id_positive and
-                    id_range):
+            id_range = node.id < size
+            id_checks = (is_node and
+                        id_int and
+                        id_positive and
+                        id_range)
+            if not id_checks:
                 return False
+            
+            if node.flag or node.flag == 0:
+                flag_check = (isinstance(node.flag, int) or
+                             isinstance(node.flag, float) or
+                             isinstance(node.flag, str))
+                if not flag_check:
+                    return False
             
             if node.edges:
                 if not isinstance(node.edges, set):
@@ -195,39 +211,76 @@ class Graph():
                 for edge in node.edges:
                     if not isinstance(edge, Edge):
                         return False
+                    if not isinstance(edge.node, Node):
+                        return False
                     if edge.node not in nodes:
                         return False
-                    if not isinstance(edge.weight, int):
+                    weight_check = (isinstance(edge.weight, int) or
+                                   isinstance(edge.weight, float))
+                    if not weight_check:
                         return False
-            
-                
+        return True
     
-            
-            
-    @classmethod    
-    def check_node(cls, node: Node):
-        ...
+    def check_node(self, node: Node):
+        is_node = isinstance(node, Node)
+        id_int = isinstance(node.id, int)
+        id_positive = node.id >= 0
+        id_range = node.id < self.size
+        id_checks = (is_node and
+                    id_int and
+                    id_positive and
+                    id_range)
+        if not id_checks:
+            return False
         
-        """     
-        # Setting up new nodes and using flags to correlate with old ones
-        for id, node in enumerate(nodes):
-            
-            is_int = isinstance(node.id, int)
-            is_positive = node.id >= 0
-            if not is_int or not is_positive:
-                
-                #invalid node
-                break  
-            
-            aux_node =           
+        if node.flag or node.flag == 0:
+            flag_check = (isinstance(node.flag, int) or
+                            isinstance(node.flag, float) or
+                            isinstance(node.flag, str))
+            if not flag_check:
+                return False
+        
+        if node.edges:
+            if not isinstance(node.edges, set):
+                return False
             for edge in node.edges:
-                if node.
-                
-            new_data = node.get_data
-            new_flag = node.get_id()
-            self.add_node(new_data, new_flag)
-        """
-                
+                if not isinstance(edge, Edge):
+                    return False
+                if not isinstance(edge.node, Node):
+                    return False
+                if edge.node not in self.nodes:
+                    return False
+                weight_check = (isinstance(edge.weight, int) or
+                                isinstance(edge.weight, float))
+                if not weight_check:
+                    return False
+        return True
+    
+    def add_node(self, data: Any = None, flag: Union[int, float, str] = None):
+        self.size += 1
+        new_node = Node(self.size - 1, data, flag)
+        if self.check_node(new_node):
+            self.nodes.add(new_node)
+            return new_node
+        self.size -= 1
+        return False
+    
+    def remove_node(self, id: int):
+        aux_node = Node(id)
+        if self.nodes:
+            if aux_node in self.nodes:
+                self.nodes.remove(aux_node)
+                self.size -= 1
+                if self.size > 0:
+                    for node in self.nodes:
+                        if node.edges:
+                            aux_edge = Edge(aux_node)
+                            if aux_edge in node.edges:
+                                node.edges.remove(aux_edge)
+                return True
+            return False
+        return False        
+    
     def build_graph(self):
         raise NotImplementedError
         ...
@@ -261,54 +314,8 @@ class Graph():
             warning = f" ({time_flag()}) Relations already as defined"
             warnings.warn(warning, RuntimeWarning)
             
-        
-    #def()    
-        
-    def add_node(self, data: Any = None, flag: Any = None):
-        new_node = Node(self.last_id, data, flag)
-        self.nodes.add(new_node)
-        self.last_id += 1
-        return new_node
-
-    
-    """
-    def add_node(self, node: Node):
-        warning = f" Using function with incomplete functionalities"
-        warnings.warn(warning, ResourceWarning)
-        
-        if node.id < 0 or not isinstance(node.id, int):
-            error = f" IndexError - id #{node.id} out of bounds"
-            logging.error(error)
-            raise IndexError
-        elif node.id <= self.last_id:
-            warning = f" ResourceWarning - node id #{node.id} not new"
-            warnings.warn(warning, ResourceWarning)
-            logging.warning(warning)
-            if node in self.nodes:
-                warning = f" ResourceWarning - node id #{node.id} in use, replacing node"
-                warnings.warn(warning, ResourceWarning)
-                logging.warning(warning)
-                self.remove_node(node.id)
-                
-            self.nodes.add(node)
-                
-        self.last_id = node.id + 1
-        info = f" Node with id #{node.id} added"
-        logging.info(info)
-    """ 
-        
-    def remove_node(self, id):
-        raise NotImplementedError
-        ...
-        
-    def is_connected(self):
-        raise NotImplementedError
-        ...
-        
     def get_nodes(self):
-        raise NotImplementedError
-        ...
+        return self.nodes
         
-    def copy():
-        raise NotImplementedError
-        ...
+    def copy(self):
+        return copy.deepcopy(self)
