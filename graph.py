@@ -5,6 +5,8 @@ import warnings
 import time
 import copy
 
+import numpy as np
+
 # Log configs
 log_date = str(time.strftime("%d-%m-%y_%H:%M:%S"))
 log_name = f"logs/graph_{log_date}.log"
@@ -18,140 +20,141 @@ warning = f" This library is a work in progress and not yet functional"
 warnings.warn(warning, ImportWarning)
 
 # Time flag for warnings, errors and logs
+
+
 def time_flag():
     return str(time.strftime("%d-%m-%y_%H:%M:%S"))
 
 
-
 # =============================================================================
 class Node():
-    def __init__(self, id: int, 
-                 data: Any = None, 
-                 flag: Union[int, float, str] = None, 
+    def __init__(self, id: int,
+                 data: Any = None,
+                 flag: Union[int, float, str] = None,
                  edges: Set[Edge] = set()):
         # int
         self._id = id
         # your object
         self.data = data
-        #int
+        # int
         self.flag = flag
         # set
         self.edges = edges
-        
+
     def __eq__(self, node: Node):
         return isinstance(node, Node) and self.id == node.id
-    
+
     def __hash__(self):
         return hash(self.id)
-    
+
     @property
     def id(self):
         return self._id
-    
+
     def get_id(self):
         return self._id
-    
+
     def set_data(self, data: Any):
         self.data = data
         return self.data
-        
+
     def get_data(self):
         if not self.data:
             warning = f" ({time_flag()}) RuntimeWarning - get_data called, but no data declared in node #{self.id}"
             logging.warning(warning)
             warnings.warn(warning, RuntimeWarning)
         return self.data
-        
+
     def set_flag(self, flag: Union[int, float, str]):
         self.flag = flag
         return self.flag
-        
+
     def get_flag(self):
         return self.flag
-    
+
     def set_edges(self):
         ...
 
 
 class Edge():
-    def __init__(self, node: Node, weight: Union[int, float] = 0):
+    def __init__(self, node: int, weight: Union[int, float] = 0):
         self.node = node
         self.weight = weight
-        
+
     def __eq__(self, edge: Edge):
         eq = isinstance(edge, Edge) and self.node == edge.node
         return eq
-    
+
     def __hash__(self):
         return hash(self.node)
-    
-    def set_weight(self, weight: int):
+
+    def set_weight(self, weight: Union[int, float]):
         self.weight = weight
-    
+
     def get_weight(self):
-        return self.weight     
+        return self.weight
 
 
 class Graph():
     # Start logging
     logging.basicConfig(filename=log_name, filemode='w', level=logging.DEBUG)
-    
+
     # Each graph has a specific class id for logging purposes
     graph_count = 0
-    
+
     # True by standard, but can be toggled for performance
     check_graph_at_initialization = True
-    
-    def __init__(self, root: int = None, 
-                nodes: Set[Node] = set(), 
-                weighted: bool = False, 
-                reflexive: bool = False, 
-                symmetric: bool = False, 
-                transitive: bool = False):
-    
+
+    def __init__(self, root: int = None,
+                 nodes: Set[Node] = set(),
+                 weighted: bool = False,
+                 reflexive: bool = False,
+                 symmetric: bool = False,
+                 transitive: bool = False):
+
         # Sets graph id
         self.graph_id = self.set_graph_id()
-        
+
         self.root = root
         self.nodes = nodes
         self.size = len(self.nodes)
-        
+
         # Graph characteristics
         self.weighted = weighted
-        
+
         # Relation characteristics
         self.reflexive = reflexive
         self.symmetric = symmetric
         self.transitive = transitive
-        
+
         # Check whether a graph is valid
         if self.check_graph_at_initialization:
             if not self.is_valid(self):
                 # MUST KILL GRAPH OR TRIGGER ERROR
                 ...
-            
+
     def __del__(self):
         # Ensures the id class attribute doubles as graph count
         self.del_graph_id()
-    
-    @classmethod        
+
+    @classmethod
     def set_graph_id(cls):
         cls.graph_count += 1
         return cls.graph_count - 1
-    
+
     @classmethod
     def del_graph_id(cls):
         cls.graph_count -= 1
-        
+
     # Internal method
-    @staticmethod    
+    @staticmethod
     def is_valid(graph: Graph):
-        
+
         root = graph.root
         nodes = graph.nodes
-        
+
         size = graph.size
-        
+
         weighted = graph.weighted
         if not isinstance(weighted, bool):
             return False
@@ -164,14 +167,14 @@ class Graph():
         transitive = graph.transitive
         if not isinstance(transitive, bool):
             return False
-        
+
         if not nodes:
             if root or root == 0:
                 # broken graph, has root, but no node
                 return False
-            # Empty graph is a valid graph  
+            # Empty graph is a valid graph
             return True
-        
+
         if root or root == 0:
             if not isinstance(root, int):
                 return False
@@ -181,30 +184,30 @@ class Graph():
                     # Broken graph, root isn't one of its nodes
                     return False
             except:
-                #node typing wrong, but still shouldn't crash here
+                # node typing wrong, but still shouldn't crash here
                 return False
         if not isinstance(nodes, set):
             return False
         for node in nodes:
-            
+
             is_node = isinstance(node, Node)
             id_int = isinstance(node.id, int)
             id_positive = node.id >= 0
             id_range = node.id < size
             id_checks = (is_node and
-                        id_int and
-                        id_positive and
-                        id_range)
+                         id_int and
+                         id_positive and
+                         id_range)
             if not id_checks:
                 return False
-            
+
             if node.flag or node.flag == 0:
                 flag_check = (isinstance(node.flag, int) or
-                             isinstance(node.flag, float) or
-                             isinstance(node.flag, str))
+                              isinstance(node.flag, float) or
+                              isinstance(node.flag, str))
                 if not flag_check:
                     return False
-            
+
             if node.edges:
                 if not isinstance(node.edges, set):
                     return False
@@ -216,30 +219,30 @@ class Graph():
                     if edge.node not in nodes:
                         return False
                     weight_check = (isinstance(edge.weight, int) or
-                                   isinstance(edge.weight, float))
+                                    isinstance(edge.weight, float))
                     if not weight_check:
                         return False
         return True
-    
+
     def check_node(self, node: Node):
         is_node = isinstance(node, Node)
         id_int = isinstance(node.id, int)
         id_positive = node.id >= 0
         id_range = node.id < self.size
         id_checks = (is_node and
-                    id_int and
-                    id_positive and
-                    id_range)
+                     id_int and
+                     id_positive and
+                     id_range)
         if not id_checks:
             return False
-        
+
         if node.flag or node.flag == 0:
             flag_check = (isinstance(node.flag, int) or
-                            isinstance(node.flag, float) or
-                            isinstance(node.flag, str))
+                          isinstance(node.flag, float) or
+                          isinstance(node.flag, str))
             if not flag_check:
                 return False
-        
+
         if node.edges:
             if not isinstance(node.edges, set):
                 return False
@@ -255,7 +258,7 @@ class Graph():
                 if not weight_check:
                     return False
         return True
-    
+
     def add_node(self, data: Any = None, flag: Union[int, float, str] = None):
         self.size += 1
         new_node = Node(self.size - 1, data, flag)
@@ -264,7 +267,7 @@ class Graph():
             return new_node
         self.size -= 1
         return False
-    
+
     def remove_node(self, id: int):
         aux_node = Node(id)
         if self.nodes:
@@ -279,32 +282,48 @@ class Graph():
                                 node.edges.remove(aux_edge)
                 return True
             return False
-        return False        
-    
-    def build_graph(self):
-        raise NotImplementedError
-        ...
-        
+        return False
+
+    def build_graph(self, adj_matrix: np.ndarray[Union[int, float, None]],
+                    obj_list: np.ndarray[Any] = None):
+        try:
+            for i, line in adj_matrix:
+                if obj_list:
+                    self.nodes.add(Node(i, obj_list[i]))
+                else:
+                    self.nodes.add(Node(i))
+                for j, weight in line:
+                    if j != i and weight != None:
+                        self.nodes(Node(i)).edges.add(Edge(Node(j), weight))
+
+        except:
+            raise
+
+        if self.check_graph_at_initialization:
+            if not self.is_valid(self):
+                # MUST KILL GRAPH OR TRIGGER ERROR
+                ...
+
     # Shouldn't be needed. Maybe to delete unused id
     def refactor(self):
         raise NotImplementedError
         ...
-    
-    def set_relations(self, reflexive = False, symmetric = False, transitive = False):
-        if  ((self.reflexive != reflexive) or 
-            (self.symmetric != symmetric) or 
-            (self.transitive != transitive)):
-            
+
+    def set_relations(self, reflexive=False, symmetric=False, transitive=False):
+        if ((self.reflexive != reflexive) or
+            (self.symmetric != symmetric) or
+                (self.transitive != transitive)):
+
             self.reflexive = reflexive
             self.symmetric = symmetric
             self.transitive = transitive
-            
+
             info = (f" ({time_flag()}) Relations' properties changed. New properties are:\n"
                     f" reflexive:     {reflexive}\n"
                     f" symmetric:     {symmetric}\n"
-                    f" transitive:    {transitive}")             
+                    f" transitive:    {transitive}")
             logging.info(info)
-            
+
         else:
             info = (f" ({time_flag()}) set_relations called, but no changes made. Current relations:"
                     f" reflexive:     {reflexive}\n"
@@ -313,9 +332,9 @@ class Graph():
             logging.info(info)
             warning = f" ({time_flag()}) Relations already as defined"
             warnings.warn(warning, RuntimeWarning)
-            
+
     def get_nodes(self):
         return self.nodes
-        
+
     def copy(self):
         return copy.deepcopy(self)
