@@ -1,5 +1,6 @@
-from typing import List, Set, Tuple, Any, Union
 from __future__ import annotations
+from turtle import goto
+from typing import List, Set, Dict, Tuple, Any, Union
 import logging
 import warnings
 import time
@@ -27,13 +28,57 @@ def time_flag():
 
 
 # =============================================================================
+# Type setting
+class type():
+
+    @classmethod
+    def __init__(cls):
+        cls.idtype = int
+        cls.datatype = Any
+        cls.flagtype = Union[int, float, str]
+        cls.nodetype = Node
+        cls.edgetype = Dict[type.idtype, type.weighttype]
+        cls.weighttype = Union[int, float]
+
+    @classmethod
+    def is_id(cls, id):
+        equation = isinstance(id, cls.idtype) and id >= 0
+        return equation
+
+    @classmethod
+    def is_data(cls, data):
+        equation = isinstance(data, cls.datatype)
+        return equation
+
+    @classmethod
+    def is_flag(cls, flag):
+        equation = isinstance(flag, cls.flagtype)
+        return equation
+
+    @classmethod
+    def is_node(cls, node):
+        equation = isinstance(node, cls.nodetype)
+        return equation
+
+    @classmethod
+    def is_edge(cls, edge):
+        equation = (isinstance(edge, cls.edgetype) and
+                    cls.is_id(list(edge.keys())[0]))
+        return equation
+
+    @classmethod
+    def is_weight(cls, weight):
+        equation = isinstance(weight, cls.weighttype)
+        return equation
+
+        # =============================================================================
+
+
 class Node():
-    def __init__(self, id: int,
-                 data: Any = None,
-                 flag: Union[int, float, str] = None,
-                 edges: Set[Edge] = set()):
-        # int
-        self._id = id
+    def __init__(self,
+                 data: type.datatype = None,
+                 flag: type.flagtype = None,
+                 edges: Dict[type.idtype, type.edgetype] = {}):
         # your object
         self.data = data
         # int
@@ -41,18 +86,18 @@ class Node():
         # set
         self.edges = edges
 
-    def __eq__(self, node: Node):
-        return isinstance(node, Node) and self.id == node.id
+    # def __eq__(self, node: Node):
+    #     return isinstance(node, Node) and self.id == node.id
 
-    def __hash__(self):
-        return hash(self.id)
+    # def __hash__(self):
+    #     return hash(self.id)
 
-    @property
-    def id(self):
-        return self._id
+    # @property
+    # def id(self):
+    #     return self._id
 
-    def get_id(self):
-        return self._id
+    # def get_id(self):
+    #     return self._id
 
     def set_data(self, data: Any):
         self.data = data
@@ -76,23 +121,23 @@ class Node():
         ...
 
 
-class Edge():
-    def __init__(self, node: int, weight: Union[int, float] = 0):
-        self.node = node
-        self.weight = weight
+# class Edge():
+#     def __init__(self, node: int, weight: Union[int, float] = 0):
+#         self.node = node
+#         self.weight = weight
 
-    def __eq__(self, edge: Edge):
-        eq = isinstance(edge, Edge) and self.node == edge.node
-        return eq
+#     def __eq__(self, edge: Edge):
+#         eq = isinstance(edge, Edge) and self.node == edge.node
+#         return eq
 
-    def __hash__(self):
-        return hash(self.node)
+#     def __hash__(self):
+#         return hash(self.node)
 
-    def set_weight(self, weight: Union[int, float]):
-        self.weight = weight
+#     def set_weight(self, weight: Union[int, float]):
+#         self.weight = weight
 
-    def get_weight(self):
-        return self.weight
+#     def get_weight(self):
+#         return self.weight
 
 
 class Graph():
@@ -105,8 +150,8 @@ class Graph():
     # True by standard, but can be toggled for performance
     check_graph_at_initialization = True
 
-    def __init__(self, root: int = None,
-                 nodes: Set[Node] = set(),
+    def __init__(self, root: type.idtype = None,
+                 nodes: Dict[type.idtype, type.nodetype] = {},
                  weighted: bool = False,
                  reflexive: bool = False,
                  symmetric: bool = False,

@@ -71,3 +71,16 @@ nodes.add(Node(1))
 # print(Node(0).text in nodes)
 for node in nodes:
     print(node.text)
+
+
+class types():
+    @classmethod
+    def __init__(self):
+        self.testtype = Node
+
+
+typer = types()
+print(isinstance(Node(5), types.testtype))
+
+a = {"blah": ['a', 'b']}
+print(list(a.keys())[0])
