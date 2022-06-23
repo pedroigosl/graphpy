@@ -1,2 +1,0 @@
-# graphpy
-python graph lib
