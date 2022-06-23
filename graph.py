@@ -30,7 +30,6 @@ def time_flag():
 # =============================================================================
 # Type setting
 class type():
-
     @classmethod
     def __init__(cls):
         cls.idtype = int
@@ -77,14 +76,17 @@ class type():
 
     @classmethod
     def is_edgelist(cls, edgelist):
-        id_check = True
+        edge_check = True
         try:
-            for key in edgelist.keys():
+            for key, weight in edgelist:
                 if not cls.is_id(key):
-                    id_check = False
+                    edge_check = False
+                if weight or weight == 0:
+                    if not cls.is_weight(weight):
+                        edge_check = False
         except:
             return False
-        equation = isinstance(edgelist, cls.edgelisttype) and id_check
+        equation = isinstance(edgelist, cls.edgelisttype) and edge_check
         return equation
 
     @classmethod
@@ -92,7 +94,7 @@ class type():
         equation = isinstance(weight, cls.weighttype)
         return equation
 
-        # =============================================================================
+# =============================================================================
 
 
 class Node():
@@ -106,19 +108,6 @@ class Node():
         self.flag = flag
         # set
         self.edges = edges
-
-    # def __eq__(self, node: Node):
-    #     return isinstance(node, Node) and self.id == node.id
-
-    # def __hash__(self):
-    #     return hash(self.id)
-
-    # @property
-    # def id(self):
-    #     return self._id
-
-    # def get_id(self):
-    #     return self._id
 
     def set_data(self, data: type.datatype):
         self.data = data
@@ -140,25 +129,6 @@ class Node():
 
     def set_edges(self):
         ...
-
-
-# class Edge():
-#     def __init__(self, node: int, weight: Union[int, float] = 0):
-#         self.node = node
-#         self.weight = weight
-
-#     def __eq__(self, edge: Edge):
-#         eq = isinstance(edge, Edge) and self.node == edge.node
-#         return eq
-
-#     def __hash__(self):
-#         return hash(self.node)
-
-#     def set_weight(self, weight: Union[int, float]):
-#         self.weight = weight
-
-#     def get_weight(self):
-#         return self.weight
 
 
 class Graph():
@@ -195,7 +165,7 @@ class Graph():
 
         # Check whether a graph is valid
         if self.check_graph_at_initialization:
-            if not self.is_valid(self):
+            if not Validator.is_graph(self):
                 # MUST KILL GRAPH OR TRIGGER ERROR
                 ...
 
@@ -212,9 +182,67 @@ class Graph():
     def del_graph_id(cls):
         cls.graph_count -= 1
 
-    # Internal method
+    def add_node(self, data: type.datatype = None,
+                 flag: type.flagtype = None,
+                 edges: type.edgelist = {}):
+
+        new_node = Node(data, flag, edges)
+        new_id = self.size
+
+        if Validator.check_node(new_node, self.nodes):
+            self.nodes[new_id] = new_node
+            self.size += 1
+            return new_node
+        return False
+
+    def remove_node(self, id: type.idtype):
+
+        if id in self.nodes:
+            self.nodes.pop(id)
+            self.size -= 1
+            if self.size > 0:
+                for key, node in self.nodes:
+                    if node.edges:
+                        if id in node.edges:
+                            node.edges.pop(id)
+            return True
+        return False
+
+    def set_relations(self, reflexive=False, symmetric=False, transitive=False):
+        if ((self.reflexive != reflexive) or
+            (self.symmetric != symmetric) or
+                (self.transitive != transitive)):
+
+            self.reflexive = reflexive
+            self.symmetric = symmetric
+            self.transitive = transitive
+
+            info = (f" ({time_flag()}) Relations' properties changed. New properties are:\n"
+                    f" reflexive:     {reflexive}\n"
+                    f" symmetric:     {symmetric}\n"
+                    f" transitive:    {transitive}")
+            logging.info(info)
+
+        else:
+            info = (f" ({time_flag()}) set_relations called, but no changes made. Current relations:"
+                    f" reflexive:     {reflexive}\n"
+                    f" symmetric:     {symmetric}\n"
+                    f" transitive:    {transitive}")
+            logging.info(info)
+            warning = f" ({time_flag()}) Relations already as defined"
+            warnings.warn(warning, RuntimeWarning)
+
+    def get_nodes(self):
+        return self.nodes
+
+    def copy(self):
+        return copy.deepcopy(self)
+
+
+class Validator():
+
     @staticmethod
-    def is_valid(graph: Graph):
+    def is_graph(graph: Graph):
 
         root = graph.root
         nodes = graph.nodes
@@ -258,23 +286,15 @@ class Graph():
             id_checks = id_range
             if not id_checks:
                 return False
-            flag = node.flag
-            if flag or flag == 0:
-                if not type.is_flag(flag):
-                    return False
-
-            if node.edges:
-                if not type.is_edgelist(node.edges):
-                    return False
-                for key, weight in node.edges:
-                    if key not in nodes:
-                        return False
-                    if not type.is_weight(weight):
-                        return False
+            if not Validator.check_node(node, nodes):
+                return False
         return True
 
-    def check_node(self, node: type.nodetype):
+    @staticmethod
+    def check_node(node: type.nodetype, nodes: type.nodelisttype):
         if not type.is_node(node):
+            return False
+        if not type.is_nodelist(nodes):
             return False
         if node.flag or node.flag == 0:
             if not type.is_flag():
@@ -287,92 +307,35 @@ class Graph():
                 if not type.is_edgelist(node.edges):
                     return False
                 for key, weight in node.edges:
-                    if key not in self.nodes:
+                    if key not in nodes:
                         return False
                     if not type.is_weight(weight):
                         return False
         return True
 
-    def add_node(self, data: type.datatype = None,
-                 flag: type.flagtype = None,
-                 edges: type.edgelist = {}):
 
-        new_node = Node(data, flag, edges)
-        new_id = self.size
-
-        if self.check_node(new_node):
-            self.nodes[new_id] = new_node
-            self.size += 1
-            return new_node
-        return False
-
-    def remove_node(self, id: type.idtype):
-
-        if id in self.nodes:
-            self.nodes.pop(id)
-            self.size -= 1
-            if self.size > 0:
-                for key, node in self.nodes:
-                    if node.edges:
-                        if id in node.edges:
-                            node.edges.pop(id)
-            return True
-        return False
+class Builder():
 
     # Advanced method to build graph from adjacency matrix
-    def build_graph(self, adj_matrix: type.adjmatrixtype,
-                    obj_list: np.ndarray[Any] = None):
-        if self.size == 0:
-            try:
-                for i, line in enumerate(adj_matrix):
-                    if obj_list:
-                        self.add_node(data=obj_list[i])
-                    else:
-                        self.add_node()
-                    for j, weight in enumerate(line):
-                        if j != i and weight != None:
-                            self.nodes[i].edges[j] = weight
-            except:
-                raise
-        else:
+    @staticmethod
+    def adj_matrix(adj_mat: type.adjmatrixtype,
+                   obj_list: np.ndarray[Any] = None):
+        nodes = {}
+        try:
+            for i, line in enumerate(adj_mat):
+                if obj_list:
+                    nodes[i] = Node(data=obj_list[i])
+                else:
+                    nodes[i] = Node()
+                for j, weight in enumerate(line):
+                    if weight != None:
+                        nodes[i].edges[j] = weight
+        except:
             raise
-
-        if self.check_graph_at_initialization:
-            if not self.is_valid(self):
-                # MUST KILL GRAPH OR TRIGGER ERROR
-                ...
+        return Graph(nodes)
 
     # Shouldn't be needed. Maybe to delete unused id
-    def refactor(self):
+    @staticmethod
+    def refactor():
         raise NotImplementedError
         ...
-
-    def set_relations(self, reflexive=False, symmetric=False, transitive=False):
-        if ((self.reflexive != reflexive) or
-            (self.symmetric != symmetric) or
-                (self.transitive != transitive)):
-
-            self.reflexive = reflexive
-            self.symmetric = symmetric
-            self.transitive = transitive
-
-            info = (f" ({time_flag()}) Relations' properties changed. New properties are:\n"
-                    f" reflexive:     {reflexive}\n"
-                    f" symmetric:     {symmetric}\n"
-                    f" transitive:    {transitive}")
-            logging.info(info)
-
-        else:
-            info = (f" ({time_flag()}) set_relations called, but no changes made. Current relations:"
-                    f" reflexive:     {reflexive}\n"
-                    f" symmetric:     {symmetric}\n"
-                    f" transitive:    {transitive}")
-            logging.info(info)
-            warning = f" ({time_flag()}) Relations already as defined"
-            warnings.warn(warning, RuntimeWarning)
-
-    def get_nodes(self):
-        return self.nodes
-
-    def copy(self):
-        return copy.deepcopy(self)
