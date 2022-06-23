@@ -84,3 +84,23 @@ print(isinstance(Node(5), types.testtype))
 
 a = {"blah": ['a', 'b']}
 print(list(a.keys())[0])
+
+dic = {1: "a",
+       "2": "b",
+       3: "c"
+       }
+A = [isinstance(key, int) for key in dic.keys()]
+# if A:
+# print("yay")
+# if {}:
+#     print("yas")
+
+dic[4] = "hey"
+print(dic[4])
+
+# def test(dic={}):
+#     thisdic = dic
+#     return thisdic
+
+
+# print(test(None))

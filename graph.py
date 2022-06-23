@@ -37,8 +37,11 @@ class type():
         cls.datatype = Any
         cls.flagtype = Union[int, float, str]
         cls.nodetype = Node
-        cls.edgetype = Dict[type.idtype, type.weighttype]
+        cls.nodelisttype = Dict[type.idtype, type.nodetype]
+        cls.edgelisttype = Dict[type.idtype, type.weighttype]
         cls.weighttype = Union[int, float]
+
+        cls.adjmatrixtype = np.ndarray[Union[int, float, None]]
 
     @classmethod
     def is_id(cls, id):
@@ -61,9 +64,27 @@ class type():
         return equation
 
     @classmethod
-    def is_edge(cls, edge):
-        equation = (isinstance(edge, cls.edgetype) and
-                    cls.is_id(list(edge.keys())[0]))
+    def is_nodelist(cls, nodelist):
+        node_check = True
+        try:
+            for key, val in nodelist:
+                if not (cls.is_id(key) and cls.is_node(val)):
+                    node_check = False
+        except:
+            return False
+        equation = isinstance(nodelist, cls.nodelisttype) and node_check
+        return equation
+
+    @classmethod
+    def is_edgelist(cls, edgelist):
+        id_check = True
+        try:
+            for key in edgelist.keys():
+                if not cls.is_id(key):
+                    id_check = False
+        except:
+            return False
+        equation = isinstance(edgelist, cls.edgelisttype) and id_check
         return equation
 
     @classmethod
@@ -78,7 +99,7 @@ class Node():
     def __init__(self,
                  data: type.datatype = None,
                  flag: type.flagtype = None,
-                 edges: Dict[type.idtype, type.edgetype] = {}):
+                 edges: type.edgelisttype = {}):
         # your object
         self.data = data
         # int
@@ -99,7 +120,7 @@ class Node():
     # def get_id(self):
     #     return self._id
 
-    def set_data(self, data: Any):
+    def set_data(self, data: type.datatype):
         self.data = data
         return self.data
 
@@ -110,7 +131,7 @@ class Node():
             warnings.warn(warning, RuntimeWarning)
         return self.data
 
-    def set_flag(self, flag: Union[int, float, str]):
+    def set_flag(self, flag: type.flagtype):
         self.flag = flag
         return self.flag
 
@@ -151,7 +172,7 @@ class Graph():
     check_graph_at_initialization = True
 
     def __init__(self, root: type.idtype = None,
-                 nodes: Dict[type.idtype, type.nodetype] = {},
+                 nodes: type.nodelisttype = {},
                  weighted: bool = False,
                  reflexive: bool = False,
                  symmetric: bool = False,
@@ -221,127 +242,99 @@ class Graph():
             return True
 
         if root or root == 0:
-            if not isinstance(root, int):
+            if not type.is_id(root):
                 return False
-            root_node = Node(root)
             try:
-                if not root_node in nodes:
+                if not root in nodes:
                     # Broken graph, root isn't one of its nodes
                     return False
             except:
                 # node typing wrong, but still shouldn't crash here
                 return False
-        if not isinstance(nodes, set):
+        if not type.is_nodelist(nodes):
             return False
-        for node in nodes:
-
-            is_node = isinstance(node, Node)
-            id_int = isinstance(node.id, int)
-            id_positive = node.id >= 0
-            id_range = node.id < size
-            id_checks = (is_node and
-                         id_int and
-                         id_positive and
-                         id_range)
+        for key, node in nodes:
+            id_range = key < size
+            id_checks = id_range
             if not id_checks:
                 return False
-
-            if node.flag or node.flag == 0:
-                flag_check = (isinstance(node.flag, int) or
-                              isinstance(node.flag, float) or
-                              isinstance(node.flag, str))
-                if not flag_check:
+            flag = node.flag
+            if flag or flag == 0:
+                if not type.is_flag(flag):
                     return False
 
             if node.edges:
-                if not isinstance(node.edges, set):
+                if not type.is_edgelist(node.edges):
                     return False
-                for edge in node.edges:
-                    if not isinstance(edge, Edge):
+                for key, weight in node.edges:
+                    if key not in nodes:
                         return False
-                    if not isinstance(edge.node, Node):
-                        return False
-                    if edge.node not in nodes:
-                        return False
-                    weight_check = (isinstance(edge.weight, int) or
-                                    isinstance(edge.weight, float))
-                    if not weight_check:
+                    if not type.is_weight(weight):
                         return False
         return True
 
-    def check_node(self, node: Node):
-        is_node = isinstance(node, Node)
-        id_int = isinstance(node.id, int)
-        id_positive = node.id >= 0
-        id_range = node.id < self.size
-        id_checks = (is_node and
-                     id_int and
-                     id_positive and
-                     id_range)
-        if not id_checks:
+    def check_node(self, node: type.nodetype):
+        if not type.is_node(node):
             return False
-
         if node.flag or node.flag == 0:
-            flag_check = (isinstance(node.flag, int) or
-                          isinstance(node.flag, float) or
-                          isinstance(node.flag, str))
-            if not flag_check:
+            if not type.is_flag():
                 return False
-
-        if node.edges:
-            if not isinstance(node.edges, set):
-                return False
-            for edge in node.edges:
-                if not isinstance(edge, Edge):
+            flag = node.flag
+            if flag or flag == 0:
+                if not type.is_flag(flag):
                     return False
-                if not isinstance(edge.node, Node):
+            if node.edges:
+                if not type.is_edgelist(node.edges):
                     return False
-                if edge.node not in self.nodes:
-                    return False
-                weight_check = (isinstance(edge.weight, int) or
-                                isinstance(edge.weight, float))
-                if not weight_check:
-                    return False
+                for key, weight in node.edges:
+                    if key not in self.nodes:
+                        return False
+                    if not type.is_weight(weight):
+                        return False
         return True
 
-    def add_node(self, data: Any = None, flag: Union[int, float, str] = None):
-        self.size += 1
-        new_node = Node(self.size - 1, data, flag)
+    def add_node(self, data: type.datatype = None,
+                 flag: type.flagtype = None,
+                 edges: type.edgelist = {}):
+
+        new_node = Node(data, flag, edges)
+        new_id = self.size
+
         if self.check_node(new_node):
-            self.nodes.add(new_node)
+            self.nodes[new_id] = new_node
+            self.size += 1
             return new_node
-        self.size -= 1
         return False
 
-    def remove_node(self, id: int):
-        aux_node = Node(id)
-        if self.nodes:
-            if aux_node in self.nodes:
-                self.nodes.remove(aux_node)
-                self.size -= 1
-                if self.size > 0:
-                    for node in self.nodes:
-                        if node.edges:
-                            aux_edge = Edge(aux_node)
-                            if aux_edge in node.edges:
-                                node.edges.remove(aux_edge)
-                return True
-            return False
+    def remove_node(self, id: type.idtype):
+
+        if id in self.nodes:
+            self.nodes.pop(id)
+            self.size -= 1
+            if self.size > 0:
+                for key, node in self.nodes:
+                    if node.edges:
+                        if id in node.edges:
+                            node.edges.pop(id)
+            return True
         return False
 
-    def build_graph(self, adj_matrix: np.ndarray[Union[int, float, None]],
+    # Advanced method to build graph from adjacency matrix
+    def build_graph(self, adj_matrix: type.adjmatrixtype,
                     obj_list: np.ndarray[Any] = None):
-        try:
-            for i, line in adj_matrix:
-                if obj_list:
-                    self.nodes.add(Node(i, obj_list[i]))
-                else:
-                    self.nodes.add(Node(i))
-                for j, weight in line:
-                    if j != i and weight != None:
-                        self.nodes(Node(i)).edges.add(Edge(Node(j), weight))
-
-        except:
+        if self.size == 0:
+            try:
+                for i, line in enumerate(adj_matrix):
+                    if obj_list:
+                        self.add_node(data=obj_list[i])
+                    else:
+                        self.add_node()
+                    for j, weight in enumerate(line):
+                        if j != i and weight != None:
+                            self.nodes[i].edges[j] = weight
+            except:
+                raise
+        else:
             raise
 
         if self.check_graph_at_initialization:
