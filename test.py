@@ -1,6 +1,7 @@
 from __future__ import annotations
-from typing import List, Any, Optional, Set
-
+from typing import List, Any, Optional, Set, Dict, Union
+from pydantic import BaseModel
+from typeguard import check_type, typechecked
 
 # class crass():
 #     id_a = 1000
@@ -74,6 +75,8 @@ for node in nodes:
 
 
 class types():
+    mytype = Dict[int, str]
+
     @classmethod
     def __init__(self):
         self.testtype = Node
@@ -86,7 +89,7 @@ a = {"blah": ['a', 'b']}
 print(list(a.keys())[0])
 
 dic = {1: "a",
-       "2": "b",
+       2: "b",
        3: "c"
        }
 A = [isinstance(key, int) for key in dic.keys()]
@@ -96,7 +99,15 @@ A = [isinstance(key, int) for key in dic.keys()]
 #     print("yas")
 
 dic[4] = "hey"
-print(dic[4])
+
+mytype = {"a": "b"}
+
+
+if check_type('gfdsgdf', dic, types.mytype):
+    print("yay")
+
+if None != 0:
+    print("whaaaat")
 
 # def test(dic={}):
 #     thisdic = dic
