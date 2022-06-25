@@ -58,7 +58,7 @@ class Type():
             check_type("id", id, cls.idtype)
             equation = id >= 0
         except:
-            raise TypeError
+            raise TypeError("Id failed type check")
         return equation
 
     @classmethod
@@ -71,7 +71,7 @@ class Type():
         try:
             check_type("flag", flag, cls.flagtype)
         except:
-            raise TypeError
+            raise TypeError("Flag failed type check")
         return True
 
     @classmethod
@@ -79,7 +79,7 @@ class Type():
         try:
             check_type("node", node, cls.nodetype)
         except:
-            raise TypeError
+            raise TypeError("Node failed type check")
         return True
 
     @classmethod
@@ -87,45 +87,46 @@ class Type():
         try:
             check_type("weight", weight, cls.weighttype)
         except:
-            raise TypeError
+            raise TypeError("Weight failed type check")
         return True
 
     @classmethod
     def is_nodelist(cls, nodelist):
         try:
             check_type("nodelist", nodelist, cls.nodelisttype)
-            for key, val in nodelist:
-                cls.is_id(key)
-                cls.is_node(val)
         except:
-            raise TypeError
+            raise TypeError("Nodelist failed type check")
+        for key, val in nodelist:
+            cls.is_id(key)
+            cls.is_node(val)
+
         return True
 
     @classmethod
     def is_edgelist(cls, edgelist):
         try:
             check_type("edgelist", edgelist, cls.edgelisttype)
-            for key, weight in edgelist:
-                cls.is_id(key)
-                if weight != None:
-                    cls.is_weight(weight)
         except:
-            raise TypeError
+            raise TypeError("Edgelist failed type check")
+        for key, weight in edgelist:
+            cls.is_id(key)
+            if weight != None:
+                cls.is_weight(weight)
         return True
 
     @classmethod
     def is_adjmatrix(cls, adj_mat):
         try:
             check_type("adjmatrix", adj_mat, cls.adjmatrixtype)
-            mat_n = len(adj_mat)
-            for i, line in enumerate(adj_mat):
-                if len(line) != mat_n:
-                    raise IndexError
-                for j, weight in enumerate(line):
-                    if weight != None:
-                        cls.is_weight(weight)
         except:
-            raise TypeError
+            raise TypeError("Adjmatrix failed type check")
+        mat_n = len(adj_mat)
+        for i, line in enumerate(adj_mat):
+            if len(line) != mat_n:
+                raise IndexError("Adjmatrix not homogeneous")
+            for j, weight in enumerate(line):
+                if weight != None:
+                    cls.is_weight(weight)
         return True
 
 # =============================================================================
@@ -144,25 +145,19 @@ class Node():
         self.edges = edges
 
     def set_data(self, data: Type.datatype):
-        self.data = data
-        return self.data
+        raise NotImplementedError
 
     def get_data(self):
-        if not self.data:
-            warning = f" ({time_flag()}) RuntimeWarning - get_data called, but no data declared in node #{self.id}"
-            logging.warning(warning)
-            warnings.warn(warning, RuntimeWarning)
-        return self.data
+        raise NotImplementedError
 
     def set_flag(self, flag: Type.flagtype):
-        self.flag = flag
-        return self.flag
+        raise NotImplementedError
 
     def get_flag(self):
-        return self.flag
+        raise NotImplementedError
 
     def set_edges(self):
-        ...
+        raise NotImplementedError
 
 # =============================================================================
 
@@ -200,7 +195,10 @@ class Graph():
 
         # Check whether a graph is valid
         if self.check_graph_at_initialization:
-            if not Validator.is_graph(self):
+            try:
+                Validator.is_graph(self)
+            except:
+                raise RuntimeError("Graph instanced wrong!")
                 # MUST KILL GRAPH OR TRIGGER ERROR
                 ...
 
@@ -224,7 +222,7 @@ class Graph():
         Type.is_id(dest_id)
         Type.is_weight(weight)
         if not (main_id in self.nodes and dest_id in self.nodes):
-            raise IndexError
+            raise KeyError("Broken edge")
         self.nodes[main_id].edges[dest_id] = weight
         return True
 
@@ -239,7 +237,7 @@ class Graph():
             self.nodes[new_id] = new_node
             self.size += 1
             return new_node
-        raise RuntimeError
+        raise RuntimeError("Broken node")
 
     def remove_node(self, id: Type.idtype):
         Type.is_id(id)
@@ -252,9 +250,16 @@ class Graph():
                         if id in node.edges:
                             node.edges.pop(id)
             return True
-        raise IndexError
+        raise KeyError("Node not found")
 
     def set_relations(self, reflexive=False, symmetric=False, transitive=False):
+        if not isinstance(reflexive, bool):
+            raise TypeError("Reflexive is not bool")
+        if not isinstance(symmetric, bool):
+            raise TypeError("Symmetric is not bool")
+        if not isinstance(transitive, bool):
+            raise TypeError("Transitive is not bool")
+
         if ((self.reflexive != reflexive) or
             (self.symmetric != symmetric) or
                 (self.transitive != transitive)):
@@ -299,21 +304,21 @@ class Validator():
 
         weighted = graph.weighted
         if not isinstance(weighted, bool):
-            raise TypeError
+            raise TypeError("Weighted is not bool")
         reflexive = graph.reflexive
         if not isinstance(reflexive, bool):
-            raise TypeError
+            raise TypeError("Reflexive is not bool")
         symmetric = graph.symmetric
         if not isinstance(symmetric, bool):
-            raise TypeError
+            raise TypeError("Symmetric is not bool")
         transitive = graph.transitive
         if not isinstance(transitive, bool):
-            raise TypeError
+            raise TypeError("Transitive is not bool")
 
         if not nodes:
             if root != None:
                 # broken graph, has root, but no node
-                raise RuntimeError
+                raise RuntimeError("Broken graph, root without nodes")
             # Empty graph is a valid graph
             return True
 
@@ -322,18 +327,18 @@ class Validator():
             try:
                 if not root in nodes:
                     # Broken graph, root isn't one of its nodes
-                    raise ValueError
+                    raise KeyError("Root not in nodes")
             except:
                 # node typing wrong, but still shouldn't crash here
-                raise TypeError
+                raise TypeError("Broken nodes")
         Type.is_nodelist(nodes)
         for key, node in nodes:
             id_range = key < size
             id_checks = id_range
             if not id_checks:
-                raise IndexError
+                raise IndexError("Id not in graph range")
             if not Validator.check_node(node, nodes):
-                raise RuntimeError
+                raise RuntimeError("Broken node")
         return True
 
     @staticmethod
@@ -343,11 +348,11 @@ class Validator():
         flag = node.flag
         if flag != None:
             Type.is_flag(flag)
-        if node.edges:
+        if node.edges != None:
             Type.is_edgelist(node.edges)
             for key, weight in node.edges:
                 if key not in nodes:
-                    raise IndexError
+                    raise KeyError("Edge node not in nodes")
                 Type.is_weight(weight)
         return True
 
@@ -361,8 +366,7 @@ class Builder():
     def adj_matrix(adj_mat: Type.adjmatrixtype,
                    obj_list: np.ndarray[Any] = None):
         nodes = {}
-        if not Type.is_adjmatrix(adj_mat):
-            raise TypeError
+        Type.is_adjmatrix(adj_mat)
         try:
             for i, line in enumerate(adj_mat):
                 if obj_list:
@@ -373,7 +377,7 @@ class Builder():
                     if weight != None:
                         nodes[i].edges[j] = weight
         except:
-            raise RuntimeError
+            raise RuntimeError("Broken adjacency matrix")
         return Graph(nodes)
 
     # Shouldn't be needed. Maybe to delete unused id
