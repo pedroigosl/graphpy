@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Set, Dict, Tuple, Any, Union
+from typing import Dict, Any, Union
 import logging
 import warnings
 import time
@@ -9,8 +9,8 @@ from typeguard import check_type
 import numpy as np
 
 # Log configs
-log_date = str(time.strftime("%d-%m-%y_%H:%M:%S"))
-log_name = f"logs/graph_{log_date}.log"
+log_date = str(time.strftime("%d-%m-%y#%H:%M:%S"))
+log_name = f"logs/graph#{log_date}.log"
 print(f"Session log started at {log_name}")
 
 # Warning configs
@@ -20,30 +20,45 @@ warnings.simplefilter("always")
 warning = f" This library is a work in progress and not yet functional"
 warnings.warn(warning, ImportWarning)
 
+# =============================================================================
+
+
+def start_log():
+    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                        datefmt="%d-%m-%y %H:%M:%S",
+                        filename=log_name,
+                        filemode='w', level=logging.DEBUG)
 # Time flag for warnings, errors and logs
 
 
 def time_flag():
-    return str(time.strftime("%d-%m-%y_%H:%M:%S"))
-
+    return str(time.strftime("%d-%m-%y %H:%M:%S"))
 
 # =============================================================================
 # Type setting
+
+
 class Type():
 
-    idtype = int
-    datatype = Any
-    flagtype = Union[int, float, str]
-    nodetype = Node
-    nodelisttype = Dict[Type.idtype, Type.nodetype]
-    edgelisttype = Dict[Type.idtype, Type.weighttype]
-    weighttype = Union[int, float]
+    @classmethod
+    def __init__(cls):
+        cls.idtype = int
+        cls.datatype = Any
+        cls.flagtype = Union[int, float, str]
+        cls.nodetype = Node
+        cls.weighttype = Union[int, float]
+        cls.nodelisttype = Dict[cls.idtype, cls.nodetype]
+        cls.edgelisttype = Dict[cls.idtype, cls.weighttype]
 
-    adjmatrixtype = np.ndarray[np.ndarray[Union[int, float, None]]]
+        cls.adjmatrixtype = np.ndarray[np.ndarray[Union[int, float, None]]]
 
     @classmethod
     def is_id(cls, id):
-        equation = check_type("id", id, cls.idtype) and id >= 0
+        try:
+            check_type("id", id, cls.idtype)
+            equation = id >= 0
+        except:
+            raise TypeError
         return equation
 
     @classmethod
@@ -53,65 +68,65 @@ class Type():
 
     @classmethod
     def is_flag(cls, flag):
-        equation = check_type("flag", flag, cls.flagtype)
-        return equation
+        try:
+            check_type("flag", flag, cls.flagtype)
+        except:
+            raise TypeError
+        return True
 
     @classmethod
     def is_node(cls, node):
-        equation = check_type("node", node, cls.nodetype)
-        return equation
-
-    @classmethod
-    def is_nodelist(cls, nodelist):
-        node_check = True
         try:
-            for key, val in nodelist:
-                if not (cls.is_id(key) and cls.is_node(val)):
-                    node_check = False
+            check_type("node", node, cls.nodetype)
         except:
-            return False
-        equation = check_type("nodelist", nodelist,
-                              cls.nodelisttype) and node_check
-        return equation
-
-    @classmethod
-    def is_edgelist(cls, edgelist):
-        edge_check = True
-        try:
-            for key, weight in edgelist:
-                if not cls.is_id(key):
-                    edge_check = False
-                if weight != None:
-                    if not cls.is_weight(weight):
-                        edge_check = False
-        except:
-            return False
-        equation = check_type("edgelist", edgelist,
-                              cls.edgelisttype) and edge_check
-        return equation
+            raise TypeError
+        return True
 
     @classmethod
     def is_weight(cls, weight):
-        equation = check_type("weight", weight, cls.weighttype)
-        return equation
+        try:
+            check_type("weight", weight, cls.weighttype)
+        except:
+            raise TypeError
+        return True
+
+    @classmethod
+    def is_nodelist(cls, nodelist):
+        try:
+            check_type("nodelist", nodelist, cls.nodelisttype)
+            for key, val in nodelist:
+                cls.is_id(key)
+                cls.is_node(val)
+        except:
+            raise TypeError
+        return True
+
+    @classmethod
+    def is_edgelist(cls, edgelist):
+        try:
+            check_type("edgelist", edgelist, cls.edgelisttype)
+            for key, weight in edgelist:
+                cls.is_id(key)
+                if weight != None:
+                    cls.is_weight(weight)
+        except:
+            raise TypeError
+        return True
 
     @classmethod
     def is_adjmatrix(cls, adj_mat):
-        mat_check = True
         try:
+            check_type("adjmatrix", adj_mat, cls.adjmatrixtype)
             mat_n = len(adj_mat)
             for i, line in enumerate(adj_mat):
                 if len(line) != mat_n:
-                    mat_check = False
+                    raise IndexError
                 for j, weight in enumerate(line):
                     if weight != None:
-                        if not cls.is_weight(weight):
-                            mat_check = False
+                        cls.is_weight(weight)
         except:
-            return False
-        equation = check_type("adjmatrix", adj_mat,
-                              cls.adjmatrixtype) and mat_check
-        return equation
+            raise TypeError
+        return True
 
 # =============================================================================
 
@@ -149,11 +164,12 @@ class Node():
     def set_edges(self):
         ...
 
+# =============================================================================
+
 
 class Graph():
     # Start logging
-    logging.basicConfig(filename=log_name, filemode='w', level=logging.DEBUG)
-
+    start_log()
     # Each graph has a specific class id for logging purposes
     graph_count = 0
 
@@ -204,13 +220,11 @@ class Graph():
     def add_edge(self, main_id: Type.idtype,
                  dest_id: Type.idtype,
                  weight: Type.weighttype):
-        if not (Type.is_id(main_id) and
-                Type.is_id(dest_id) and
-                Type.is_weight(weight)):
-            return False
+        Type.is_id(main_id)
+        Type.is_id(dest_id)
+        Type.is_weight(weight)
         if not (main_id in self.nodes and dest_id in self.nodes):
-            return False
-
+            raise IndexError
         self.nodes[main_id].edges[dest_id] = weight
         return True
 
@@ -225,10 +239,10 @@ class Graph():
             self.nodes[new_id] = new_node
             self.size += 1
             return new_node
-        return False
+        raise RuntimeError
 
     def remove_node(self, id: Type.idtype):
-
+        Type.is_id(id)
         if id in self.nodes:
             self.nodes.pop(id)
             self.size -= 1
@@ -238,7 +252,7 @@ class Graph():
                         if id in node.edges:
                             node.edges.pop(id)
             return True
-        return False
+        raise IndexError
 
     def set_relations(self, reflexive=False, symmetric=False, transitive=False):
         if ((self.reflexive != reflexive) or
@@ -270,6 +284,8 @@ class Graph():
     def copy(self):
         return copy.deepcopy(self)
 
+# =============================================================================
+
 
 class Validator():
 
@@ -283,65 +299,59 @@ class Validator():
 
         weighted = graph.weighted
         if not isinstance(weighted, bool):
-            return False
+            raise TypeError
         reflexive = graph.reflexive
         if not isinstance(reflexive, bool):
-            return False
+            raise TypeError
         symmetric = graph.symmetric
         if not isinstance(symmetric, bool):
-            return False
+            raise TypeError
         transitive = graph.transitive
         if not isinstance(transitive, bool):
-            return False
+            raise TypeError
 
         if not nodes:
             if root != None:
                 # broken graph, has root, but no node
-                return False
+                raise RuntimeError
             # Empty graph is a valid graph
             return True
 
         if root != None:
-            if not Type.is_id(root):
-                return False
+            Type.is_id(root)
             try:
                 if not root in nodes:
                     # Broken graph, root isn't one of its nodes
-                    return False
+                    raise ValueError
             except:
                 # node typing wrong, but still shouldn't crash here
-                return False
-        if not Type.is_nodelist(nodes):
-            return False
+                raise TypeError
+        Type.is_nodelist(nodes)
         for key, node in nodes:
             id_range = key < size
             id_checks = id_range
             if not id_checks:
-                return False
+                raise IndexError
             if not Validator.check_node(node, nodes):
-                return False
+                raise RuntimeError
         return True
 
     @staticmethod
     def check_node(node: Type.nodetype, nodes: Type.nodelisttype):
-        if not Type.is_node(node):
-            return False
-        if not Type.is_nodelist(nodes):
-            return False
-
+        Type.is_node(node)
+        Type.is_nodelist(nodes)
         flag = node.flag
         if flag != None:
-            if not Type.is_flag(flag):
-                return False
+            Type.is_flag(flag)
         if node.edges:
-            if not Type.is_edgelist(node.edges):
-                return False
+            Type.is_edgelist(node.edges)
             for key, weight in node.edges:
                 if key not in nodes:
-                    return False
-                if not Type.is_weight(weight):
-                    return False
+                    raise IndexError
+                Type.is_weight(weight)
         return True
+
+# =============================================================================
 
 
 class Builder():
@@ -352,7 +362,7 @@ class Builder():
                    obj_list: np.ndarray[Any] = None):
         nodes = {}
         if not Type.is_adjmatrix(adj_mat):
-            return False
+            raise TypeError
         try:
             for i, line in enumerate(adj_mat):
                 if obj_list:
@@ -363,18 +373,11 @@ class Builder():
                     if weight != None:
                         nodes[i].edges[j] = weight
         except:
-            raise
+            raise RuntimeError
         return Graph(nodes)
 
     # Shouldn't be needed. Maybe to delete unused id
     @staticmethod
     def refactor():
         raise NotImplementedError
-        ...
-
-
-class Logger():
-
-    @staticmethod
-    def start_log():
         ...
