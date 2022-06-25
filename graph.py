@@ -9,8 +9,8 @@ from typeguard import check_type
 import numpy as np
 
 # Log configs
-log_date = str(time.strftime("%d-%m-%y#%H:%M:%S"))
-log_name = f"logs/graph#{log_date}.log"
+log_date = str(time.strftime("%d-%m-%y %H:%M:%S"))
+log_name = f"logs/graphlog {log_date}.log"
 print(f"Session log started at {log_name}")
 
 # Warning configs
