@@ -9,8 +9,8 @@ from typeguard import check_type
 import numpy as np
 
 # Log configs
-log_date = str(time.strftime("%d-%m-%y#%H:%M:%S"))
-log_name = f"logs/graph#{log_date}.log"
+log_date = str(time.strftime("%d-%m-%y %H:%M:%S"))
+log_name = f"logs/graphlog {log_date}.log"
 print(f"Session log started at {log_name}")
 
 # Warning configs
@@ -58,12 +58,13 @@ class Type():
             check_type("id", id, cls.idtype)
             equation = id >= 0
         except:
+            logging.error(f" <'TypeError'> Id failed type check")
             raise TypeError("Id failed type check")
         return equation
 
     @classmethod
     def is_data(cls, data):
-        #equation = check_type("data", data, cls.datatype)
+        # equation = check_type("data", data, cls.datatype)
         return True
 
     @classmethod
@@ -71,6 +72,7 @@ class Type():
         try:
             check_type("flag", flag, cls.flagtype)
         except:
+            logging.error(f" <'TypeError'> Flag failed type check")
             raise TypeError("Flag failed type check")
         return True
 
@@ -79,6 +81,7 @@ class Type():
         try:
             check_type("node", node, cls.nodetype)
         except:
+            logging.error(f" <'TypeError'> Node failed type check")
             raise TypeError("Node failed type check")
         return True
 
@@ -87,6 +90,7 @@ class Type():
         try:
             check_type("weight", weight, cls.weighttype)
         except:
+            logging.error(f" <'TypeError'> Weight failed type check")
             raise TypeError("Weight failed type check")
         return True
 
@@ -95,6 +99,7 @@ class Type():
         try:
             check_type("nodelist", nodelist, cls.nodelisttype)
         except:
+            logging.error(f" <'TypeError'> Nodelist failed type check")
             raise TypeError("Nodelist failed type check")
         for key, val in nodelist:
             cls.is_id(key)
@@ -107,6 +112,7 @@ class Type():
         try:
             check_type("edgelist", edgelist, cls.edgelisttype)
         except:
+            logging.error(f" <'TypeError'> Edgelist failed type check")
             raise TypeError("Edgelist failed type check")
         for key, weight in edgelist:
             cls.is_id(key)
@@ -119,10 +125,12 @@ class Type():
         try:
             check_type("adjmatrix", adj_mat, cls.adjmatrixtype)
         except:
+            logging.error(f" <'TypeError'> Adjmatrix failed type check")
             raise TypeError("Adjmatrix failed type check")
         mat_n = len(adj_mat)
         for i, line in enumerate(adj_mat):
             if len(line) != mat_n:
+                logging.error(f" <'IndexError'> Adjmatrix not homogeneous")
                 raise IndexError("Adjmatrix not homogeneous")
             for j, weight in enumerate(line):
                 if weight != None:
@@ -171,6 +179,9 @@ class Graph():
     # True by standard, but can be toggled for performance
     check_graph_at_initialization = True
 
+    # Raise exception whenever a mistake is made, whether fatal or not
+    merciless = True
+
     def __init__(self, root: Type.idtype = None,
                  nodes: Type.nodelisttype = {},
                  weighted: bool = False,
@@ -195,16 +206,16 @@ class Graph():
 
         # Check whether a graph is valid
         if self.check_graph_at_initialization:
-            try:
-                Validator.is_graph(self)
-            except:
-                raise RuntimeError("Graph instanced wrong!")
-                # MUST KILL GRAPH OR TRIGGER ERROR
-                ...
+            Validator.is_graph(self)
+
+        logging.info(
+            f" Graph #{self.graph_id} initialized with size {self.size}")
 
     def __del__(self):
         # Ensures the id class attribute doubles as graph count
         self.del_graph_id()
+        logging.info(
+            f" Graph #{self.graph_id} removed")
 
     @classmethod
     def set_graph_id(cls):
@@ -222,8 +233,18 @@ class Graph():
         Type.is_id(dest_id)
         Type.is_weight(weight)
         if not (main_id in self.nodes and dest_id in self.nodes):
-            raise KeyError("Broken edge")
+            warnings.warn(
+                f" <'KeyError'> Edge's id(s) not in nodes. Was not added", RuntimeWarning)
+            logging.warning(
+                f" <'KeyError'> Edge's id(s) not in nodes. Was not added")
+
+            if self.merciless:
+                logging.error(f" <'merciless == True'> Execution stopped")
+                raise KeyError("Edge's id(s) not in nodes")
+            return False
         self.nodes[main_id].edges[dest_id] = weight
+        logging.info(
+            f" Edge ({main_id}->{dest_id} [{weight}]) added to graph #{self.graph_id}")
         return True
 
     def add_node(self, data: Type.datatype = None,
@@ -232,32 +253,55 @@ class Graph():
 
         new_node = Node(data, flag, edges)
         new_id = self.size
+        try:
+            Validator.check_node(new_node, self.nodes)
 
-        if Validator.check_node(new_node, self.nodes):
             self.nodes[new_id] = new_node
             self.size += 1
+
+            logging.info(f" Node #{new_id} added to graph #{self.graph_id}")
+
             return new_node
-        raise RuntimeError("Broken node")
+        except:
+            warnings.warn(
+                f" <'KeyError'> Node not valid. Was not added", RuntimeWarning)
+            logging.warning(f" <'KeyError'> Node not valid. Was not added")
+
+            if self.merciless:
+                logging.error(f" <'merciless == True'> Execution stopped")
+                raise KeyError("Node not valid")
+            return False
 
     def remove_node(self, id: Type.idtype):
         Type.is_id(id)
         if id in self.nodes:
-            self.nodes.pop(id)
+            popped = self.nodes.pop(id)
             self.size -= 1
             if self.size > 0:
                 for key, node in self.nodes:
                     if node.edges:
                         if id in node.edges:
                             node.edges.pop(id)
-            return True
-        raise KeyError("Node not found")
+            logging.info(f" Node #{id} removed from graph #{self.graph_id}")
+            return popped
+
+        warnings.warn(f" <'KeyError'> Node not found", RuntimeWarning)
+        logging.warning(f" <'KeyError'> Node not found")
+
+        if self.merciless:
+            logging.error(f" <'merciless == True'> Execution stopped")
+            raise KeyError("Node not found")
+        return False
 
     def set_relations(self, reflexive=False, symmetric=False, transitive=False):
         if not isinstance(reflexive, bool):
+            logging.error(f" <'TypeError'> Reflexive is not bool")
             raise TypeError("Reflexive is not bool")
         if not isinstance(symmetric, bool):
+            logging.error(f" <'TypeError'> Symmetric is not bool")
             raise TypeError("Symmetric is not bool")
         if not isinstance(transitive, bool):
+            logging.error(f" <'TypeError'> Transitive is not bool")
             raise TypeError("Transitive is not bool")
 
         if ((self.reflexive != reflexive) or
@@ -268,20 +312,21 @@ class Graph():
             self.symmetric = symmetric
             self.transitive = transitive
 
-            info = (f" ({time_flag()}) Relations' properties changed. New properties are:\n"
+            info = (f" Relations' properties in graph #{self.graph_id} changed. New properties are:\n"
                     f" reflexive:     {reflexive}\n"
                     f" symmetric:     {symmetric}\n"
                     f" transitive:    {transitive}")
             logging.info(info)
+            return True
 
         else:
-            info = (f" ({time_flag()}) set_relations called, but no changes made. Current relations:"
-                    f" reflexive:     {reflexive}\n"
-                    f" symmetric:     {symmetric}\n"
-                    f" transitive:    {transitive}")
-            logging.info(info)
-            warning = f" ({time_flag()}) Relations already as defined"
-            warnings.warn(warning, RuntimeWarning)
+            warnings.warn(
+                f" <'KeyError'> Relations already as defined", RuntimeWarning)
+            logging.warning(f" <'KeyError'> Relations already as defined")
+            if self.merciless:
+                logging.error(f" <'merciless == True'> Execution stopped")
+                raise KeyError("Relations already as defined")
+            return False
 
     def get_nodes(self):
         return self.nodes
@@ -304,20 +349,26 @@ class Validator():
 
         weighted = graph.weighted
         if not isinstance(weighted, bool):
+            logging.error(f" <'TypeError'> Weighted is not bool")
             raise TypeError("Weighted is not bool")
         reflexive = graph.reflexive
         if not isinstance(reflexive, bool):
+            logging.error(f" <'TypeError'> Reflexive is not bool")
             raise TypeError("Reflexive is not bool")
         symmetric = graph.symmetric
         if not isinstance(symmetric, bool):
+            logging.error(f" <'TypeError'> Symmetric is not bool")
             raise TypeError("Symmetric is not bool")
         transitive = graph.transitive
         if not isinstance(transitive, bool):
+            logging.error(f" <'TypeError'> Transitive is not bool")
             raise TypeError("Transitive is not bool")
 
         if not nodes:
             if root != None:
                 # broken graph, has root, but no node
+                logging.error(
+                    f" <'RuntimeError'> Broken graph, root without nodes")
                 raise RuntimeError("Broken graph, root without nodes")
             # Empty graph is a valid graph
             return True
@@ -327,18 +378,20 @@ class Validator():
             try:
                 if not root in nodes:
                     # Broken graph, root isn't one of its nodes
+                    logging.error(f" <'KeyError'> Root not in nodes")
                     raise KeyError("Root not in nodes")
             except:
-                # node typing wrong, but still shouldn't crash here
-                raise TypeError("Broken nodes")
+                # node typing wrong
+                logging.error(f" <'TypeError'> Nodelist failed type check")
+                raise TypeError("Nodelist failed type check")
         Type.is_nodelist(nodes)
         for key, node in nodes:
             id_range = key < size
             id_checks = id_range
             if not id_checks:
+                logging.error(f" <'IndexError'> Id not in graph range")
                 raise IndexError("Id not in graph range")
-            if not Validator.check_node(node, nodes):
-                raise RuntimeError("Broken node")
+            Validator.check_node(node, nodes)
         return True
 
     @staticmethod
@@ -352,6 +405,7 @@ class Validator():
             Type.is_edgelist(node.edges)
             for key, weight in node.edges:
                 if key not in nodes:
+                    logging.error(f" <'KeyError'> Edge node not in nodes")
                     raise KeyError("Edge node not in nodes")
                 Type.is_weight(weight)
         return True
@@ -377,7 +431,10 @@ class Builder():
                     if weight != None:
                         nodes[i].edges[j] = weight
         except:
+            logging.error(f" <'RuntimeError'> Broken adjacency matrix")
             raise RuntimeError("Broken adjacency matrix")
+
+        logging.info(f" Adjacency matrix is valid. Graph is being built")
         return Graph(nodes)
 
     # Shouldn't be needed. Maybe to delete unused id
