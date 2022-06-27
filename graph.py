@@ -179,6 +179,9 @@ class Graph():
     # True by standard, but can be toggled for performance
     check_graph_at_initialization = True
 
+    # Raise exception whenever a mistake is made, whether fatal or not
+    merciless = True
+
     def __init__(self, root: Type.idtype = None,
                  nodes: Type.nodelisttype = {},
                  weighted: bool = False,
@@ -203,17 +206,16 @@ class Graph():
 
         # Check whether a graph is valid
         if self.check_graph_at_initialization:
-            try:
-                Validator.is_graph(self)
-            except:
-                logging.error(f" <'RuntimeError'> Graph instanced wrong!")
-                raise RuntimeError("Graph instanced wrong!")
-                # MUST KILL GRAPH OR TRIGGER ERROR
-                ...
+            Validator.is_graph(self)
+
+        logging.info(
+            f" Graph #{self.graph_id} initialized with size {self.size}")
 
     def __del__(self):
         # Ensures the id class attribute doubles as graph count
         self.del_graph_id()
+        logging.info(
+            f" Graph #{self.graph_id} removed")
 
     @classmethod
     def set_graph_id(cls):
@@ -231,10 +233,18 @@ class Graph():
         Type.is_id(dest_id)
         Type.is_weight(weight)
         if not (main_id in self.nodes and dest_id in self.nodes):
-            logging.error(
-                f" <'KeyError'> Edge's id(s) not in nodes")
-            raise KeyError("Edge's id(s) not in nodes")
+            warnings.warn(
+                f" <'KeyError'> Edge's id(s) not in nodes. Was not added", RuntimeWarning)
+            logging.warning(
+                f" <'KeyError'> Edge's id(s) not in nodes. Was not added")
+
+            if self.merciless:
+                logging.error(f" <'merciless == True'> Execution stopped")
+                raise KeyError("Edge's id(s) not in nodes")
+            return False
         self.nodes[main_id].edges[dest_id] = weight
+        logging.info(
+            f" Edge ({main_id}->{dest_id} [{weight}]) added to graph #{self.graph_id}")
         return True
 
     def add_node(self, data: Type.datatype = None,
@@ -243,26 +253,45 @@ class Graph():
 
         new_node = Node(data, flag, edges)
         new_id = self.size
+        try:
+            Validator.check_node(new_node, self.nodes)
 
-        Validator.check_node(new_node, self.nodes)
+            self.nodes[new_id] = new_node
+            self.size += 1
 
-        self.nodes[new_id] = new_node
-        self.size += 1
-        return new_node
+            logging.info(f" Node #{new_id} added to graph #{self.graph_id}")
+
+            return new_node
+        except:
+            warnings.warn(
+                f" <'KeyError'> Node not valid. Was not added", RuntimeWarning)
+            logging.warning(f" <'KeyError'> Node not valid. Was not added")
+
+            if self.merciless:
+                logging.error(f" <'merciless == True'> Execution stopped")
+                raise KeyError("Node not valid")
+            return False
 
     def remove_node(self, id: Type.idtype):
         Type.is_id(id)
         if id in self.nodes:
-            self.nodes.pop(id)
+            popped = self.nodes.pop(id)
             self.size -= 1
             if self.size > 0:
                 for key, node in self.nodes:
                     if node.edges:
                         if id in node.edges:
                             node.edges.pop(id)
-            return True
-        logging.error(f" <'KeyError'> Node not found")
-        raise KeyError("Node not found")
+            logging.info(f" Node #{id} removed from graph #{self.graph_id}")
+            return popped
+
+        warnings.warn(f" <'KeyError'> Node not found", RuntimeWarning)
+        logging.warning(f" <'KeyError'> Node not found")
+
+        if self.merciless:
+            logging.error(f" <'merciless == True'> Execution stopped")
+            raise KeyError("Node not found")
+        return False
 
     def set_relations(self, reflexive=False, symmetric=False, transitive=False):
         if not isinstance(reflexive, bool):
@@ -283,21 +312,21 @@ class Graph():
             self.symmetric = symmetric
             self.transitive = transitive
 
-            # info = (f" ({time_flag()}) Relations' properties changed. New properties are:\n"
-            #         f" reflexive:     {reflexive}\n"
-            #         f" symmetric:     {symmetric}\n"
-            #         f" transitive:    {transitive}")
-            # logging.info(info)
+            info = (f" Relations' properties in graph #{self.graph_id} changed. New properties are:\n"
+                    f" reflexive:     {reflexive}\n"
+                    f" symmetric:     {symmetric}\n"
+                    f" transitive:    {transitive}")
+            logging.info(info)
+            return True
 
         else:
-            ...
-            # info = (f" ({time_flag()}) set_relations called, but no changes made. Current relations:"
-            #         f" reflexive:     {reflexive}\n"
-            #         f" symmetric:     {symmetric}\n"
-            #         f" transitive:    {transitive}")
-            # logging.info(info)
-            # warning = f" ({time_flag()}) Relations already as defined"
-            # warnings.warn(warning, RuntimeWarning)
+            warnings.warn(
+                f" <'KeyError'> Relations already as defined", RuntimeWarning)
+            logging.warning(f" <'KeyError'> Relations already as defined")
+            if self.merciless:
+                logging.error(f" <'merciless == True'> Execution stopped")
+                raise KeyError("Relations already as defined")
+            return False
 
     def get_nodes(self):
         return self.nodes
@@ -404,6 +433,8 @@ class Builder():
         except:
             logging.error(f" <'RuntimeError'> Broken adjacency matrix")
             raise RuntimeError("Broken adjacency matrix")
+
+        logging.info(f" Adjacency matrix is valid. Graph is being built")
         return Graph(nodes)
 
     # Shouldn't be needed. Maybe to delete unused id

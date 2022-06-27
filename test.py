@@ -1,8 +1,15 @@
 from graph import start_log
 import logging
+import warnings
 import time
 # raise TypeError("wrong type")
 
+# Warning configs
+warnings.simplefilter("always")
+
+# Import warning
+warning = f" This library is a work in progress and not yet functional"
+warnings.warn(warning, ImportWarning)
 
 # Log configs
 log_date = str(time.strftime("%d-%m-%y %H:%M:%S"))
@@ -32,6 +39,6 @@ logging.error(txt)
 
 time.sleep(1)
 logging.error(txt)
-
+warnings.warn("terst")
 f(2)
 print("h")
