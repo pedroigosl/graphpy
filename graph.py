@@ -26,9 +26,15 @@ warnings.warn(warning, ImportWarning)
 def start_log():
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                         datefmt="%d-%m-%y %H:%M:%S",
-                        filename=log_name,
+                        filename="logs/log.log",  # log_name,
                         filemode='w', level=logging.DEBUG)
 # Time flag for warnings, errors and logs
+
+
+def start_classes():
+    Type()
+    Validator()
+    Node()
 
 
 def time_flag():
@@ -50,7 +56,7 @@ class Type():
         cls.nodelisttype = Dict[cls.idtype, cls.nodetype]
         cls.edgelisttype = Dict[cls.idtype, cls.weighttype]
 
-        cls.adjmatrixtype = np.ndarray[np.ndarray[Union[int, float, None]]]
+        #cls.adjmatrixtype = np.ndarray[np.ndarray[Union[int, float, None]]]
 
     @classmethod
     def is_id(cls, id):
@@ -79,7 +85,7 @@ class Type():
     @classmethod
     def is_node(cls, node):
         try:
-            check_type("node", node, cls.nodetype)
+            check_type("node", node, Type.nodetype)
         except:
             logging.error(f" <'TypeError'> Node failed type check")
             raise TypeError("Node failed type check")
@@ -101,7 +107,7 @@ class Type():
         except:
             logging.error(f" <'TypeError'> Nodelist failed type check")
             raise TypeError("Nodelist failed type check")
-        for key, val in nodelist:
+        for key, val in nodelist.items():
             cls.is_id(key)
             cls.is_node(val)
 
@@ -114,7 +120,7 @@ class Type():
         except:
             logging.error(f" <'TypeError'> Edgelist failed type check")
             raise TypeError("Edgelist failed type check")
-        for key, weight in edgelist:
+        for key, weight in edgelist.items():
             cls.is_id(key)
             if weight != None:
                 cls.is_weight(weight)
@@ -152,6 +158,9 @@ class Node():
         # set
         self.edges = edges
 
+    def __len__(self):
+        return len(self.edges)
+
     def set_data(self, data: Type.datatype):
         raise NotImplementedError
 
@@ -171,8 +180,6 @@ class Node():
 
 
 class Graph():
-    # Start logging
-    start_log()
     # Each graph has a specific class id for logging purposes
     graph_count = 0
 
@@ -194,8 +201,7 @@ class Graph():
 
         self.root = root
         self.nodes = nodes
-        self.size = len(self.nodes)
-
+        self.last_id = self.size - 1
         # Graph characteristics
         self.weighted = weighted
 
@@ -211,11 +217,16 @@ class Graph():
         logging.info(
             f" Graph #{self.graph_id} initialized with size {self.size}")
 
+    def __len__(self):
+        return len(self.nodes)
+
     def __del__(self):
         # Ensures the id class attribute doubles as graph count
         self.del_graph_id()
-        logging.info(
-            f" Graph #{self.graph_id} removed")
+
+    @property
+    def size(self):
+        return self.__len__()
 
     @classmethod
     def set_graph_id(cls):
@@ -225,6 +236,8 @@ class Graph():
     @classmethod
     def del_graph_id(cls):
         cls.graph_count -= 1
+        # logging.info(
+        #     f" Graph #{cls.graph_count} removed")
 
     def add_edge(self, main_id: Type.idtype,
                  dest_id: Type.idtype,
@@ -250,14 +263,12 @@ class Graph():
     def add_node(self, data: Type.datatype = None,
                  flag: Type.flagtype = None,
                  edges: Type.edgelist = {}):
-
         new_node = Node(data, flag, edges)
-        new_id = self.size
+        new_id = self.last_id + 1
         try:
-            Validator.check_node(new_node, self.nodes)
-
+            Validator.check_node(new_node, self, adding=True)
             self.nodes[new_id] = new_node
-            self.size += 1
+            self.last_id += 1
 
             logging.info(f" Node #{new_id} added to graph #{self.graph_id}")
 
@@ -276,7 +287,6 @@ class Graph():
         Type.is_id(id)
         if id in self.nodes:
             popped = self.nodes.pop(id)
-            self.size -= 1
             if self.size > 0:
                 for key, node in self.nodes:
                     if node.edges:
@@ -345,7 +355,7 @@ class Validator():
         root = graph.root
         nodes = graph.nodes
 
-        size = graph.size
+        last_id = graph.last_id
 
         weighted = graph.weighted
         if not isinstance(weighted, bool):
@@ -386,27 +396,35 @@ class Validator():
                 raise TypeError("Nodelist failed type check")
         Type.is_nodelist(nodes)
         for key, node in nodes:
-            id_range = key < size
+            id_range = key <= last_id
             id_checks = id_range
             if not id_checks:
                 logging.error(f" <'IndexError'> Id not in graph range")
                 raise IndexError("Id not in graph range")
-            Validator.check_node(node, nodes)
+            Validator.check_node(node, graph)
         return True
 
     @staticmethod
-    def check_node(node: Type.nodetype, nodes: Type.nodelisttype):
+    def check_node(node: Type.nodetype, graph: Graph, adding=False):
         Type.is_node(node)
-        Type.is_nodelist(nodes)
+
+        try:
+            check_type("graph", graph, Graph)
+        except:
+            logging.error(f" <'TypeError'> Graph failed type check")
+            raise TypeError("Graph failed type check")
+
+        Type.is_nodelist(graph.nodes)
         flag = node.flag
-        if flag != None:
+        if flag:
             Type.is_flag(flag)
         if node.edges != None:
             Type.is_edgelist(node.edges)
-            for key, weight in node.edges:
-                if key not in nodes:
-                    logging.error(f" <'KeyError'> Edge node not in nodes")
-                    raise KeyError("Edge node not in nodes")
+            for key, weight in node.edges.items():
+                if key not in graph.nodes:
+                    if not (adding and key == graph.last_id + 1):
+                        logging.error(f" <'KeyError'> Edge node not in nodes")
+                        raise KeyError("Edge node not in nodes")
                 Type.is_weight(weight)
         return True
 
@@ -442,3 +460,8 @@ class Builder():
     def refactor():
         raise NotImplementedError
         ...
+
+
+start_log()
+
+start_classes()
