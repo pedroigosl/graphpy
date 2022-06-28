@@ -85,7 +85,7 @@ class Type():
     @classmethod
     def is_node(cls, node):
         try:
-            check_type("node", node, Type.nodetype)
+            check_type("node", node, cls.nodetype)
         except:
             logging.error(f" <'TypeError'> Node failed type check")
             raise TypeError("Node failed type check")

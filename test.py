@@ -8,7 +8,7 @@ for a in range(0, 5):
 
 # node1 = graph.add_node(edges={1: 0})
 # graph.nodes[1] = 5
-graph.add_node(edges={0: 1, "g": 0})
+graph.add_node(edges={0: 1, 6: 0})
 for key, node in graph.nodes.items():
     print(key, node.edges)
 print(graph.size)
