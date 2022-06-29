@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, Any, Union, Optional
+from typing import Dict, Any, Union, List
 import logging
 import warnings
 import time
@@ -56,7 +56,7 @@ class Type():
         cls.nodelisttype = Dict[cls.idtype, cls.nodetype]
         cls.edgelisttype = Dict[cls.idtype, cls.weighttype]
 
-        #cls.adjmatrixtype = np.ndarray[np.ndarray[Union[int, float, None]]]
+        cls.adjmatrixtype = List[List[Union[cls.weighttype, None]]]
 
     @classmethod
     def is_id(cls, id):
@@ -157,6 +157,8 @@ class Node():
         # int
         self.flag = flag
         # set
+        if edges == None:
+            edges = {}
         self.edges = edges
 
     def __len__(self):
@@ -401,7 +403,7 @@ class Validator():
                 logging.error(f" <'TypeError'> Nodelist failed type check")
                 raise TypeError("Nodelist failed type check")
         Type.is_nodelist(nodes)
-        for key, node in nodes:
+        for key, node in nodes.items():
             id_range = key <= last_id
             id_checks = id_range
             if not id_checks:
@@ -442,7 +444,7 @@ class Builder():
     # Advanced method to build graph from adjacency matrix
     @staticmethod
     def adj_matrix(adj_mat: Type.adjmatrixtype,
-                   obj_list: np.ndarray[Any] = None):
+                   obj_list: List[Any] = None):
         nodes = {}
         Type.is_adjmatrix(adj_mat)
         try:
@@ -454,12 +456,13 @@ class Builder():
                 for j, weight in enumerate(line):
                     if weight != None:
                         nodes[i].edges[j] = weight
+                # print(nodes.edges)
         except:
             logging.error(f" <'RuntimeError'> Broken adjacency matrix")
             raise RuntimeError("Broken adjacency matrix")
 
         logging.info(f" Adjacency matrix is valid. Graph is being built")
-        return Graph(nodes)
+        return Graph(nodes=nodes)
 
     # Shouldn't be needed. Maybe to delete unused id
     @staticmethod

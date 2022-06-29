@@ -1,6 +1,7 @@
-import graph as gf
+from graph import Graph, Builder
+import numpy as np
 
-graph = gf.Graph()
+graph = Graph()
 
 
 # node = gf.Node()
@@ -20,7 +21,18 @@ graph.add_edge(7, 2, 6)
 graph.remove_node(2)
 
 
-for key, node in graph.nodes.items():
+adjmat = [[0, 1, 2],
+          [None, 4, 5],
+          [6, None, 8]]
+
+for i, line in enumerate(adjmat):
+    for j, weight in enumerate(line):
+        print(i, j, weight)
+
+graph2 = Builder.adj_matrix(adjmat)
+
+
+for key, node in graph2.nodes.items():
     print(key, node.flag, node.edges)
 print(graph.size)
 
