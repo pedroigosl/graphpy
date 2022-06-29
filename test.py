@@ -1,23 +1,27 @@
 import graph as gf
 
 graph = gf.Graph()
+
+
 # node = gf.Node()
 graph.add_node()
+# graph.add_edge(0, 0, 5)
 graph.add_node()
+graph.add_edge(0, 1, 5)
 for a in range(0, 5):
     graph.add_node(flag=a)
-
 
 # node1 = graph.add_node(edges={1: 0})
 # graph.nodes[1] = 5
 graph.add_node(edges={0: 1, 5: 0})
-graph.remove_node(6)
-graph.remove_node(5)
 graph.add_node()
-graph.add_node(edges={0: 1, 5: 0})
+
+graph.add_edge(7, 2, 6)
+graph.remove_node(2)
+
 
 for key, node in graph.nodes.items():
-    print(key, node.edges)
+    print(key, node.flag, node.edges)
 print(graph.size)
 
 # dic = {0: 1}

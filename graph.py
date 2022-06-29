@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, Any, Union
+from typing import Dict, Any, Union, Optional
 import logging
 import warnings
 import time
@@ -151,7 +151,7 @@ class Node():
     def __init__(self,
                  data: Type.datatype = None,
                  flag: Type.flagtype = None,
-                 edges: Type.edgelisttype = {}):
+                 edges: Type.edgelisttype = None):
         # your object
         self.data = data
         # int
@@ -191,11 +191,13 @@ class Graph():
     merciless = True
 
     def __init__(self, root: Type.idtype = None,
-                 nodes: Type.nodelisttype = {},
+                 nodes: Type.nodelisttype = None,
                  weighted: bool = False,
                  reflexive: bool = False,
                  symmetric: bool = False,
                  transitive: bool = False):
+        if nodes == None:
+            nodes = {}
 
         # Sets graph id
         self.graph_id = self.set_graph_id()
@@ -256,6 +258,7 @@ class Graph():
                 logging.error(f" <'merciless == True'> Execution stopped")
                 raise KeyError("Edge's id(s) not in nodes")
             return False
+        # print(self.nodes[main_id] == )
         self.nodes[main_id].edges[dest_id] = weight
         logging.info(
             f" Edge ({main_id}->{dest_id} [{weight}]) added to graph #{self.graph_id}")
@@ -263,7 +266,9 @@ class Graph():
 
     def add_node(self, data: Type.datatype = None,
                  flag: Type.flagtype = None,
-                 edges: Type.edgelist = {}):
+                 edges: Type.edgelist = None):
+        if edges == None:
+            edges = {}
         new_node = Node(data, flag, edges)
         new_id = self.last_id + 1
         try:
