@@ -62,11 +62,12 @@ class Type():
     def is_id(cls, id):
         try:
             check_type("id", id, cls.idtype)
-            equation = id >= 0
+            if not id >= 0:
+                raise
         except:
             logging.error(f" <'TypeError'> Id failed type check")
             raise TypeError("Id failed type check")
-        return equation
+        return True
 
     @classmethod
     def is_data(cls, data):
@@ -288,7 +289,7 @@ class Graph():
         if id in self.nodes:
             popped = self.nodes.pop(id)
             if self.size > 0:
-                for key, node in self.nodes:
+                for key, node in self.nodes.items():
                     if node.edges:
                         if id in node.edges:
                             node.edges.pop(id)
