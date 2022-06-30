@@ -1,5 +1,5 @@
 from graph import Graph, Builder
-import numpy as np
+# import numpy as np
 
 graph = Graph()
 

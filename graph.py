@@ -6,7 +6,7 @@ import time
 import copy
 
 from typeguard import check_type
-import numpy as np
+# import numpy as np
 
 # Log configs
 log_date = str(time.strftime("%d-%m-%y %H:%M:%S"))
