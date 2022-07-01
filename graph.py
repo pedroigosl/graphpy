@@ -4,6 +4,7 @@ import logging
 import warnings
 import time
 import copy
+import os
 
 # Needed for type checking
 from typeguard import check_type
@@ -11,8 +12,9 @@ from typeguard import check_type
 
 # Log configs
 log_date = str(time.strftime("%d-%m-%y %H:%M:%S"))
-log_name = f"logs/graphlog {log_date}.log"
-print(f"Session log started at {log_name}")
+log_dir = "logs/"
+log_name = f"graphlog {log_date}.log"
+print(f"Session log started at {log_dir}{log_name}")
 
 # Warning configs
 warnings.simplefilter("always")
@@ -26,9 +28,11 @@ warnings.warn(warning, ImportWarning)
 
 # Sets up log when import is made
 def start_log():
+    if not os.path.exists(log_dir):
+        os.mkdir(log_dir)
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                         datefmt="%d-%m-%y %H:%M:%S",
-                        filename=log_name,
+                        filename=f"{log_dir}{log_name}",
                         filemode='w', level=logging.DEBUG)
 
 
