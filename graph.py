@@ -232,10 +232,6 @@ class Graph():
     def __len__(self):
         return len(self.nodes)
 
-    def __del__(self):
-        # Ensures the id class attribute doubles as graph count
-        self.del_graph_id()
-
     @property
     def size(self):
         return self.__len__()
@@ -244,12 +240,6 @@ class Graph():
     def set_graph_id(cls):
         cls.graph_count += 1
         return cls.graph_count - 1
-
-    @classmethod
-    def del_graph_id(cls):
-        cls.graph_count -= 1
-        # logging.info(
-        #     f" Graph #{cls.graph_count} removed")
 
     # Adds edge main_id -> dest_id with weight when applicable
     def add_edge(self, main_id: Type.idtype,

@@ -34,7 +34,8 @@ graph2 = Builder.adj_matrix(adjmat)
 
 for key, node in graph.nodes.items():
     print(key, node.flag, node.edges)
-print(graph.size)
+print(graph2.size)
+
 
 # dic = {0: 1}
 
