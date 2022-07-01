@@ -5,6 +5,7 @@ import warnings
 import time
 import copy
 
+# Needed for type checking
 from typeguard import check_type
 # import numpy as np
 
@@ -23,27 +24,24 @@ warnings.warn(warning, ImportWarning)
 # =============================================================================
 
 
+# Sets up log when import is made
 def start_log():
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                         datefmt="%d-%m-%y %H:%M:%S",
-                        filename="logs/log.log",  # log_name,
+                        filename=log_name,
                         filemode='w', level=logging.DEBUG)
-# Time flag for warnings, errors and logs
 
 
+# Starts essential auxiliary classes
 def start_classes():
     Type()
     Validator()
     Node()
 
-
-def time_flag():
-    return str(time.strftime("%d-%m-%y %H:%M:%S"))
-
 # =============================================================================
+
+
 # Type setting
-
-
 class Type():
 
     @classmethod
@@ -52,7 +50,7 @@ class Type():
         cls.datatype = Any
         cls.flagtype = Union[int, float, str]
         cls.nodetype = Node
-        cls.weighttype = Union[int, float]
+        cls.weighttype = Union[int, float, None]
         cls.nodelisttype = Dict[cls.idtype, cls.nodetype]
         cls.edgelisttype = Dict[cls.idtype, cls.weighttype]
 
@@ -154,9 +152,9 @@ class Node():
                  edges: Type.edgelisttype = None):
         # your object
         self.data = data
-        # int
+        # int, float or str. May be used for node markings
         self.flag = flag
-        # set
+        # Dict{id : weight}
         if edges == None:
             edges = {}
         self.edges = edges
@@ -186,7 +184,7 @@ class Graph():
     # Each graph has a specific class id for logging purposes
     graph_count = 0
 
-    # True by standard, but can be toggled for performance
+    # True by default, but can be toggled for performance
     check_graph_at_initialization = True
 
     # Raise exception whenever a mistake is made, whether fatal or not
@@ -204,18 +202,23 @@ class Graph():
         # Sets graph id
         self.graph_id = self.set_graph_id()
 
+        # Optional. Useful for trees
         self.root = root
+        # Dict{id : node}
         self.nodes = nodes
+        # Registers last used id
         self.last_id = self.size - 1
+
         # Graph characteristics
         self.weighted = weighted
 
         # Relation characteristics
         self.reflexive = reflexive
+        # Equivalent to directed
         self.symmetric = symmetric
         self.transitive = transitive
 
-        # Check whether a graph is valid
+        # Check whether starter graph is valid
         if self.check_graph_at_initialization:
             Validator.is_graph(self)
 
@@ -244,9 +247,10 @@ class Graph():
         # logging.info(
         #     f" Graph #{cls.graph_count} removed")
 
+    # Adds edge main_id -> dest_id with weight when applicable
     def add_edge(self, main_id: Type.idtype,
                  dest_id: Type.idtype,
-                 weight: Type.weighttype):
+                 weight: Type.weighttype = None):
         Type.is_id(main_id)
         Type.is_id(dest_id)
         Type.is_weight(weight)
@@ -266,6 +270,7 @@ class Graph():
             f" Edge ({main_id}->{dest_id} [{weight}]) added to graph #{self.graph_id}")
         return True
 
+    # Adds nodes with data, flag and edges when applicable
     def add_node(self, data: Type.datatype = None,
                  flag: Type.flagtype = None,
                  edges: Type.edgelist = None):
@@ -291,6 +296,7 @@ class Graph():
                 raise KeyError("Node not valid")
             return False
 
+    # Removes nodes and all edges pointing to it
     def remove_node(self, id: Type.idtype):
         Type.is_id(id)
         if id in self.nodes:
@@ -311,6 +317,7 @@ class Graph():
             raise KeyError("Node not found")
         return False
 
+    # Sets relations
     def set_relations(self, reflexive=False, symmetric=False, transitive=False):
         if not isinstance(reflexive, bool):
             logging.error(f" <'TypeError'> Reflexive is not bool")
@@ -355,8 +362,10 @@ class Graph():
 # =============================================================================
 
 
+# Validators
 class Validator():
 
+    # Checks whether graph is valid
     @staticmethod
     def is_graph(graph: Graph):
 
@@ -412,6 +421,8 @@ class Validator():
             Validator.check_node(node, graph)
         return True
 
+    # Checks whether node is valid. Also used internally by Graph to check
+    # new nodes. Hence the adding parameter (shouldn't be used externally)
     @staticmethod
     def check_node(node: Type.nodetype, graph: Graph, adding=False):
         Type.is_node(node)
@@ -439,6 +450,7 @@ class Validator():
 # =============================================================================
 
 
+# Graph builders
 class Builder():
 
     # Advanced method to build graph from adjacency matrix
@@ -470,7 +482,9 @@ class Builder():
         raise NotImplementedError
         ...
 
+# =============================================================================
 
+
+# Starters
 start_log()
-
 start_classes()

@@ -14,7 +14,7 @@ for a in range(0, 5):
 
 # node1 = graph.add_node(edges={1: 0})
 # graph.nodes[1] = 5
-graph.add_node(edges={0: 1, 5: 0})
+graph.add_node(edges={0: None, 5: 0})
 graph.add_node()
 
 graph.add_edge(7, 2, 6)
@@ -32,7 +32,7 @@ for i, line in enumerate(adjmat):
 graph2 = Builder.adj_matrix(adjmat)
 
 
-for key, node in graph2.nodes.items():
+for key, node in graph.nodes.items():
     print(key, node.flag, node.edges)
 print(graph.size)
 
