@@ -323,6 +323,9 @@ class Graph():
 
     # Sets relations
     def set_relations(self, reflexive=False, symmetric=False, transitive=False):
+        warnings.warn(f" To be scrapped for v1.0.0. Unnecessary added complexity",
+                      PendingDeprecationWarning)
+
         if not isinstance(reflexive, bool):
             logging.error(f" <'TypeError'> Reflexive is not bool")
             raise TypeError("Reflexive is not bool")
