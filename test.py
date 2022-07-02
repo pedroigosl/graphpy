@@ -14,10 +14,10 @@ for a in range(0, 5):
 
 # node1 = graph.add_node(edges={1: 0})
 # graph.nodes[1] = 5
-graph.add_node(edges={0: None, 5: 0})
+graph.add_node(edges={0: 1, 5: 0})
 graph.add_node()
 
-graph.add_edge(7, 2, 6)
+graph.add_edge(7, 3)
 graph.remove_node(2)
 
 

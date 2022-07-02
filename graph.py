@@ -54,7 +54,7 @@ class Type():
         cls.datatype = Any
         cls.flagtype = Union[int, float, str]
         cls.nodetype = Node
-        cls.weighttype = Union[int, float, None]
+        cls.weighttype = Union[int, float]
         cls.nodelisttype = Dict[cls.idtype, cls.nodetype]
         cls.edgelisttype = Dict[cls.idtype, cls.weighttype]
 
@@ -244,7 +244,7 @@ class Graph():
     # Adds edge main_id -> dest_id with weight when applicable
     def add_edge(self, main_id: Type.idtype,
                  dest_id: Type.idtype,
-                 weight: Type.weighttype = None):
+                 weight: Type.weighttype = 0):
         Type.is_id(main_id)
         Type.is_id(dest_id)
         Type.is_weight(weight)
