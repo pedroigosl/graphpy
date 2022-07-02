@@ -295,13 +295,15 @@ class Graph():
                     popped = True
 
             if symmetric:
-                node = self.nodes[dest_id]
-                if node.edges:
-                    if main_id in node.edges:
-                        node.edges.pop(main_id)
-                        logging.info(
-                            f" Edge ({dest_id}->{main_id}) removed from graph #{self.graph_id}")
-                        popped = True
+                if self.remove_edge(dest_id, main_id):
+                    popped = True
+                # node = self.nodes[dest_id]
+                # if node.edges:
+                #     if main_id in node.edges:
+                #         node.edges.pop(main_id)
+                #         logging.info(
+                #             f" Edge ({dest_id}->{main_id}) removed from graph #{self.graph_id}")
+                #         popped = True
 
             if not popped:
                 raise KeyError("Edge not found")
