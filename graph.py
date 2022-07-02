@@ -246,10 +246,15 @@ class Graph():
     # Adds edge main_id -> dest_id with weight when applicable
     def add_edge(self, main_id: Type.idtype,
                  dest_id: Type.idtype,
-                 weight: Type.weighttype = 0):
+                 weight: Type.weighttype = 0,
+                 symmetric: bool = False):
         Type.is_id(main_id)
         Type.is_id(dest_id)
         Type.is_weight(weight)
+        if not isinstance(symmetric, bool):
+            logging.error(f" <'TypeError'> Symmetric is not bool")
+            raise TypeError("Symmetric is not bool")
+
         if not (main_id in self.nodes and dest_id in self.nodes):
             warnings.warn(
                 f" <'KeyError'> Edge's id(s) not in nodes. Was not added", RuntimeWarning)
@@ -264,7 +269,49 @@ class Graph():
         self.nodes[main_id].edges[dest_id] = weight
         logging.info(
             f" Edge ({main_id}->{dest_id} [{weight}]) added to graph #{self.graph_id}")
+        if symmetric:
+            self.add_edge(dest_id, main_id, weight)
         return True
+
+    def remove_edge(self, main_id: Type.idtype, dest_id: Type.idtype, symmetric: bool = False):
+        try:
+            Type.is_id(main_id)
+            Type.is_id(dest_id)
+            if not isinstance(symmetric, bool):
+                logging.error(f" <'TypeError'> Symmetric is not bool")
+                raise TypeError("Symmetric is not bool")
+
+            if not (main_id in self.nodes and dest_id in self.nodes):
+                raise KeyError("Edge id not found")
+
+            popped = False
+
+            node = self.nodes[main_id]
+            if node.edges:
+                if dest_id in node.edges:
+                    node.edges.pop(dest_id)
+                    logging.info(
+                        f" Edge ({main_id}->{dest_id}) removed from graph #{self.graph_id}")
+                    popped = True
+
+            if symmetric:
+                node = self.nodes[dest_id]
+                if node.edges:
+                    if main_id in node.edges:
+                        node.edges.pop(main_id)
+                        logging.info(
+                            f" Edge ({dest_id}->{main_id}) removed from graph #{self.graph_id}")
+                        popped = True
+
+            if not popped:
+                raise KeyError("Edge not found")
+            return True
+        except:
+            warnings.warn(f" <'KeyError'> Edge not found", RuntimeWarning)
+            logging.warning(f" <'KeyError'> Edge not found")
+            if self.merciless:
+                logging.error(f" <'merciless == True'> Execution stopped")
+                raise KeyError("Edge not found")
 
     # Adds nodes with data, flag and edges when applicable
     def add_node(self, data: Type.datatype = None,
@@ -294,24 +341,26 @@ class Graph():
 
     # Removes nodes and all edges pointing to it
     def remove_node(self, id: Type.idtype):
-        Type.is_id(id)
-        if id in self.nodes:
-            popped = self.nodes.pop(id)
-            if self.size > 0:
-                for key, node in self.nodes.items():
-                    if node.edges:
-                        if id in node.edges:
-                            node.edges.pop(id)
-            logging.info(f" Node #{id} removed from graph #{self.graph_id}")
-            return popped
+        try:
+            Type.is_id(id)
+            if id in self.nodes:
+                popped = self.nodes.pop(id)
+                if self.size > 0:
+                    for key, node in self.nodes.items():
+                        if node.edges:
+                            if id in node.edges:
+                                node.edges.pop(id)
+                logging.info(
+                    f" Node #{id} removed from graph #{self.graph_id}")
+                return popped
+        except:
+            warnings.warn(f" <'KeyError'> Node not found", RuntimeWarning)
+            logging.warning(f" <'KeyError'> Node not found")
 
-        warnings.warn(f" <'KeyError'> Node not found", RuntimeWarning)
-        logging.warning(f" <'KeyError'> Node not found")
-
-        if self.merciless:
-            logging.error(f" <'merciless == True'> Execution stopped")
-            raise KeyError("Node not found")
-        return False
+            if self.merciless:
+                logging.error(f" <'merciless == True'> Execution stopped")
+                raise KeyError("Node not found")
+            return False
 
     # Sets relations
     def set_relations(self, reflexive=False, symmetric=False, transitive=False):

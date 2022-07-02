@@ -30,7 +30,8 @@ for i, line in enumerate(adjmat):
         print(i, j, weight)
 
 graph2 = Builder.adj_matrix(adjmat)
-
+graph.add_edge(3, 7)
+graph.remove_edge(5, 7, symmetric=True)
 
 for key, node in graph.nodes.items():
     print(key, node.flag, node.edges)
