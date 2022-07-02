@@ -197,6 +197,7 @@ class Graph():
     def __init__(self, root: Type.idtype = None,
                  nodes: Type.nodelisttype = None,
                  weighted: bool = False,
+                 directed: bool = False,
                  reflexive: bool = False,
                  symmetric: bool = False,
                  transitive: bool = False):
@@ -215,6 +216,7 @@ class Graph():
 
         # Graph characteristics
         self.weighted = weighted
+        self.directed = directed
 
         # Relation characteristics
         self.reflexive = reflexive
@@ -375,6 +377,11 @@ class Validator():
         if not isinstance(weighted, bool):
             logging.error(f" <'TypeError'> Weighted is not bool")
             raise TypeError("Weighted is not bool")
+        directed = graph.directed
+        if not isinstance(directed, bool):
+            logging.error(f" <'TypeError'> Directed is not bool")
+            raise TypeError("Directed is not bool")
+
         reflexive = graph.reflexive
         if not isinstance(reflexive, bool):
             logging.error(f" <'TypeError'> Reflexive is not bool")
