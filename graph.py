@@ -248,30 +248,30 @@ class Graph():
                  dest_id: Type.idtype,
                  weight: Type.weighttype = 0,
                  symmetric: bool = False):
-        Type.is_id(main_id)
-        Type.is_id(dest_id)
-        Type.is_weight(weight)
-        if not isinstance(symmetric, bool):
-            logging.error(f" <'TypeError'> Symmetric is not bool")
-            raise TypeError("Symmetric is not bool")
+        try:
+            Type.is_id(main_id)
+            Type.is_id(dest_id)
+            Type.is_weight(weight)
+            if not isinstance(symmetric, bool):
+                logging.error(f" <'TypeError'> Symmetric is not bool")
+                raise TypeError("Symmetric is not bool")
 
-        if not (main_id in self.nodes and dest_id in self.nodes):
-            warnings.warn(
-                f" <'KeyError'> Edge's id(s) not in nodes. Was not added", RuntimeWarning)
-            logging.warning(
-                f" <'KeyError'> Edge's id(s) not in nodes. Was not added")
+            if not (main_id in self.nodes and dest_id in self.nodes):
+                raise KeyError("Edge id not found")
 
+            self.nodes[main_id].edges[dest_id] = weight
+            logging.info(
+                f" Edge ({main_id}->{dest_id} [{weight}]) added to graph #{self.graph_id}")
+            if symmetric:
+                self.add_edge(dest_id, main_id, weight)
+            return True
+
+        except:
+            warnings.warn(f" <'KeyError'> Edge not added", RuntimeWarning)
+            logging.warning(f" <'KeyError'> Edge not added")
             if self.merciless:
                 logging.error(f" <'merciless == True'> Execution stopped")
                 raise KeyError("Edge's id(s) not in nodes")
-            return False
-        # print(self.nodes[main_id] == )
-        self.nodes[main_id].edges[dest_id] = weight
-        logging.info(
-            f" Edge ({main_id}->{dest_id} [{weight}]) added to graph #{self.graph_id}")
-        if symmetric:
-            self.add_edge(dest_id, main_id, weight)
-        return True
 
     def remove_edge(self, main_id: Type.idtype, dest_id: Type.idtype, symmetric: bool = False):
         try:
@@ -297,13 +297,6 @@ class Graph():
             if symmetric:
                 if self.remove_edge(dest_id, main_id):
                     popped = True
-                # node = self.nodes[dest_id]
-                # if node.edges:
-                #     if main_id in node.edges:
-                #         node.edges.pop(main_id)
-                #         logging.info(
-                #             f" Edge ({dest_id}->{main_id}) removed from graph #{self.graph_id}")
-                #         popped = True
 
             if not popped:
                 raise KeyError("Edge not found")

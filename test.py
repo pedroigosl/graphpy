@@ -20,6 +20,7 @@ graph.add_node()
 graph.add_edge(7, 3)
 graph.remove_node(2)
 
+graph.merciless = False
 
 adjmat = [[0, 1, 2],
           [None, 4, 5],
@@ -30,8 +31,9 @@ for i, line in enumerate(adjmat):
         print(i, j, weight)
 
 graph2 = Builder.adj_matrix(adjmat)
-graph.add_edge(3, 4, 5, symmetric=True)
-graph.remove_edge(5, 7, symmetric=True)
+graph.add_edge(7, 8, 5, symmetric=True)
+graph.remove_edge(5, 7)
+graph.add_edge(8, 8)
 
 for key, node in graph.nodes.items():
     print(key, node.flag, node.edges)
