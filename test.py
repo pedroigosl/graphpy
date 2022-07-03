@@ -1,4 +1,4 @@
-from graph import Graph, Builder
+from graph import Graph, Builder, Converter
 # import numpy as np
 
 graph = Graph()
@@ -26,20 +26,25 @@ adjmat = [[0, 1, 2],
           [None, 4, 5],
           [6, None, 8]]
 
-for i, line in enumerate(adjmat):
-    for j, weight in enumerate(line):
-        print(i, j, weight)
+
+# for i, line in enumerate(adjmat):
+#     for j, weight in enumerate(line):
+#         print(i, j, weight)
 
 graph2 = Builder.adj_matrix(adjmat)
+graph2.add_node(data=5)
+print(Converter.to_adjlist(graph2, get_nodes=True)[1])
 graph.add_edge(7, 8, 5, symmetric=True)
 graph.remove_edge(5, 7)
 graph.add_edge(8, 8)
 
-for key, node in graph.nodes.items():
-    print(key, node.flag, node.edges)
-print(graph2.size)
+# for key, node in graph.nodes.items():
+# print(key, node.flag, node.edges)
 
+# print(graph2.size)
 
+# for tup in graph.nodes[7].edges.items():
+#     print(tup)
 # dic = {0: 1}
 
 # if 0 in dic:
@@ -69,19 +74,16 @@ print(graph2.size)
 # # Warning configs
 # # warnings.simplefilter("always")
 
-
 # def start_log():
 #     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
 #                         datefmt="%d-%m-%y %H:%M:%S",
 #                         filename=log_name,
 #                         filemode='w', level=logging.DEBUG)
 
-
 # def f(c):
 #     if c == 1:
 #         raise RuntimeError
 #     return True
-
 
 # start_log()
 # txt = f"{TypeError} test"

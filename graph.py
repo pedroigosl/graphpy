@@ -188,10 +188,10 @@ class Graph():
     # Each graph has a specific class id for logging purposes
     graph_count = 0
 
-    # True by default, but can be toggled for performance
+    # Advanced settings. Only touch when sure
+    # Checks new graph by default. Can be toggled for performance
     check_graph_at_initialization = True
-
-    # Raise exception whenever a mistake is made, whether fatal or not
+    # Raise exception whenever a mistake is made by default, whether fatal or not
     merciless = True
 
     def __init__(self, root: Type.idtype = None,
@@ -533,6 +533,55 @@ class Builder():
 # =============================================================================
 
 
-# Starters
+class Converter():
+
+    # Returns an equivalent adjacency matrix and node data list
+    @staticmethod
+    def to_adjmatrix(graph: Graph, get_nodes=False):
+        try:
+            Validator.is_graph(graph)
+            if not isinstance(get_nodes, bool):
+                logging.error(f" <'TypeError'> get_nodes is not bool")
+                raise TypeError("get_nodes is not bool")
+
+            adjmatrix = [[None for j in range(0, graph.size)]
+                         for i in range(0, graph.size)]
+            nodes = [None for i in range(0, graph.size)]
+            for main_id, node in graph.nodes.items():
+                nodes[main_id] = node.data
+                for dest_id, weight in node.edges.items():
+                    adjmatrix[main_id][dest_id] = weight
+
+            if get_nodes:
+                return adjmatrix, nodes
+            return adjmatrix
+
+        except:
+            logging.error(f" <'RuntimeError'> Wrong parameters in converter")
+            raise RuntimeError("Wrong parameters in converter")
+
+    @staticmethod
+    def to_adjlist(graph: Graph, get_nodes=False):
+        try:
+            Validator.is_graph(graph)
+            if not isinstance(get_nodes, bool):
+                logging.error(f" <'TypeError'> get_nodes is not bool")
+                raise TypeError("get_nodes is not bool")
+
+            adjlist = [None for i in range(0, graph.size)]
+            nodes = [None for i in range(0, graph.size)]
+            for id, node in graph.nodes.items():
+                nodes[id] = node.data
+                adjlist[id] = list(node.edges.items())
+            if get_nodes:
+                return adjlist, nodes
+            return adjlist
+
+        except:
+            logging.error(f" <'RuntimeError'> Wrong parameters in converter")
+            raise RuntimeError("Wrong parameters in converter")
+
+        # =============================================================================
+        # Starters
 start_log()
 start_classes()
