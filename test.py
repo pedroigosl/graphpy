@@ -1,5 +1,5 @@
 from graph import Graph, Builder, Converter
-# import numpy as np
+import numpy as np
 
 graph = Graph()
 
@@ -25,7 +25,10 @@ graph.merciless = False
 adjmat = [[0, 1, 2],
           [None, 4, 5],
           [6, None, 8]]
-
+# adjmat = np.array([[0, 1, 2],
+#                    [None, 4, 5],
+#                    [6, None, 8]])
+# adjmat = "dgdf"
 
 # for i, line in enumerate(adjmat):
 #     for j, weight in enumerate(line):
@@ -33,13 +36,13 @@ adjmat = [[0, 1, 2],
 
 graph2 = Builder.adj_matrix(adjmat)
 graph2.add_node(data=5)
-print(Converter.to_adjlist(graph2, get_nodes=True)[1])
+print(Converter.to_adjlist(graph2, get_nodes=True)[0])
 graph.add_edge(7, 8, 5, symmetric=True)
 graph.remove_edge(5, 7)
 graph.add_edge(8, 8)
 
-# for key, node in graph.nodes.items():
-# print(key, node.flag, node.edges)
+for key, node in graph2.nodes.items():
+    print(key, node.flag, node.edges)
 
 # print(graph2.size)
 

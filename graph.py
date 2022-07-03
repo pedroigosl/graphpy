@@ -8,7 +8,8 @@ import os
 
 # Needed for type checking
 from typeguard import check_type
-# import numpy as np
+import numpy as np
+import numpy.typing as npt
 
 # Log configs
 log_date = str(time.strftime("%d-%m-%y %H:%M:%S"))
@@ -58,7 +59,8 @@ class Type():
         cls.nodelisttype = Dict[cls.idtype, cls.nodetype]
         cls.edgelisttype = Dict[cls.idtype, cls.weighttype]
 
-        cls.adjmatrixtype = List[List[Union[cls.weighttype, None]]]
+        cls.adjmatrixtype = Union[List[List[Union[cls.weighttype, None]]],
+                                  npt.NDArray[npt.NDArray[Union[cls.weighttype, None]]]]
 
     @classmethod
     def is_id(cls, id):
@@ -507,6 +509,7 @@ class Builder():
                    obj_list: List[Any] = None):
         nodes = {}
         Type.is_adjmatrix(adj_mat)
+
         try:
             for i, line in enumerate(adj_mat):
                 if obj_list:
@@ -580,6 +583,7 @@ class Converter():
         except:
             logging.error(f" <'RuntimeError'> Wrong parameters in converter")
             raise RuntimeError("Wrong parameters in converter")
+
 
         # =============================================================================
         # Starters
