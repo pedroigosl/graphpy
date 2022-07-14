@@ -1,4 +1,4 @@
-from graph import Graph, Builder, Converter
+from graph import Graph, Builder, Converter, Type
 import numpy as np
 
 graph = Graph()
@@ -20,7 +20,6 @@ graph.add_node()
 graph.add_edge(7, 3)
 graph.remove_node(2)
 
-graph.merciless = False
 
 adjmat = [[0, 1, 2],
           [None, 4, 5],
@@ -36,13 +35,19 @@ adjmat = [[0, 1, 2],
 
 graph2 = Builder.adj_matrix(adjmat)
 graph2.add_node(data=5)
-print(Converter.to_adjlist(graph2, get_nodes=True)[0])
-graph.add_edge(7, 8, 5, symmetric=True)
-graph.remove_edge(5, 7)
-graph.add_edge(8, 8)
-graph2.remove_node(2)
+adj_list = Converter.to_adjlist(graph2, get_nodes=True)[0]
+adj_list[0].append((2, 3))
+print(adj_list)
+graph3 = Builder.adj_list(adj_list)
 
-for key, node in graph2.nodes.items():
+print(Type.is_adjlist(adj_list))
+graph.add_edge(7, 8, 5, symmetric=True)
+# graph.merciless = False
+# graph.remove_edge(5, 7)
+graph.add_edge(8, 8)
+# graph2.remove_node(2)
+
+for key, node in graph3.nodes.items():
     print(key, node.flag, node.edges)
 
 # print(graph2.size)

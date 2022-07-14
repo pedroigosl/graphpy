@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, Any, Union, List
+from typing import Dict, Any, Union, List, Tuple
 import logging
 import warnings
 import time
@@ -61,6 +61,9 @@ class Type():
 
         cls.adjmatrixtype = Union[List[List[Union[cls.weighttype, None]]],
                                   npt.NDArray[npt.NDArray[Union[cls.weighttype, None]]]]
+
+        cls.adjlisttype = Union[List[List[Tuple[cls.idtype, cls.weighttype]]],
+                                npt.NDArray[npt.NDArray[Tuple[cls.idtype, cls.weighttype]]]]
 
     @classmethod
     def is_id(cls, id):
@@ -146,6 +149,15 @@ class Type():
             for j, weight in enumerate(line):
                 if weight != None:
                     cls.is_weight(weight)
+        return True
+
+    @classmethod
+    def is_adjlist(cls, adj_list):
+        try:
+            check_type("adjlist", adj_list, cls.adjlisttype)
+        except:
+            logging.error(f" <'TypeError'> Adjlist failed type check")
+            raise TypeError("Adjlist failed type check")
         return True
 
 # =============================================================================
@@ -534,7 +546,31 @@ class Builder():
         logging.info(f" Adjacency matrix is valid. Graph is being built")
         return Graph(nodes=nodes)
 
+# Advanced method to build graph from adjacency list
+    @staticmethod
+    def adj_list(adj_list: Type.adjlisttype,
+                 obj_list: List[Any] = None):
+        nodes = {}
+        Type.is_adjlist(adj_list)
+
+        # From here is just fodder to delete
+        try:
+            for i, edgelist in enumerate(adj_list):
+                if obj_list:
+                    nodes[i] = Node(data=obj_list[i])
+                else:
+                    nodes[i] = Node()
+                for j, weight in edgelist:
+                    nodes[i].edges[j] = weight
+                # print(nodes.edges)
+        except:
+            logging.error(f" <'RuntimeError'> Broken adjacency list")
+            raise RuntimeError("Broken adjacency list")
+
+        logging.info(f" Adjacency list is valid. Graph is being built")
+        return Graph(nodes=nodes)
     # Shouldn't be needed. Maybe to delete unused id
+
     @staticmethod
     def refactor():
         raise NotImplementedError
@@ -592,7 +628,7 @@ class Converter():
             raise RuntimeError("Wrong parameters in converter")
 
 
-        # =============================================================================
-        # Starters
+# =============================================================================
+# Starters
 start_log()
 start_classes()
