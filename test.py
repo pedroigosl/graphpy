@@ -40,6 +40,7 @@ print(Converter.to_adjlist(graph2, get_nodes=True)[0])
 graph.add_edge(7, 8, 5, symmetric=True)
 graph.remove_edge(5, 7)
 graph.add_edge(8, 8)
+graph2.remove_node(2)
 
 for key, node in graph2.nodes.items():
     print(key, node.flag, node.edges)

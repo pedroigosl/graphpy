@@ -211,6 +211,9 @@ class Graph():
 
         # Optional. Useful for trees
         self.root = root
+        if root:
+            warnings.warn(f" To be scrapped for v1.0.0. Unnecessary added complexity",
+                          PendingDeprecationWarning)
         # Dict{id : node}
         self.nodes = nodes
         # Registers last used id
@@ -443,6 +446,8 @@ class Validator():
 
         if not nodes:
             if root != None:
+                warnings.warn(f" To be scrapped for v1.0.0. Unnecessary added complexity",
+                              PendingDeprecationWarning)
                 # broken graph, has root, but no node
                 logging.error(
                     f" <'RuntimeError'> Broken graph, root without nodes")
@@ -451,6 +456,8 @@ class Validator():
             return True
 
         if root != None:
+            warnings.warn(f" To be scrapped for v1.0.0. Unnecessary added complexity",
+                          PendingDeprecationWarning)
             Type.is_id(root)
             try:
                 if not root in nodes:
