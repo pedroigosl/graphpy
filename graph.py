@@ -146,9 +146,6 @@ class Type():
             if len(line) != mat_n:
                 logging.error(f" <'IndexError'> Adjmatrix not homogeneous")
                 raise IndexError("Adjmatrix not homogeneous")
-            for j, weight in enumerate(line):
-                if weight != None:
-                    cls.is_weight(weight)
         return True
 
     @classmethod
