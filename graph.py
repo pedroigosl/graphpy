@@ -205,7 +205,7 @@ class Graph():
     # Raise exception whenever a mistake is made by default, whether fatal or not
     merciless = True
 
-    def __init__(self, root: Type.idtype = None,
+    def __init__(self,
                  nodes: Type.nodelisttype = None,
                  weighted: bool = False,
                  directed: bool = False,
@@ -218,11 +218,6 @@ class Graph():
         # Sets graph id
         self.graph_id = self.set_graph_id()
 
-        # Optional. Useful for trees
-        self.root = root
-        if root:
-            warnings.warn(f" To be scrapped for v1.0.0. Unnecessary added complexity",
-                          PendingDeprecationWarning)
         # Dict{id : node}
         self.nodes = nodes
         # Registers last used id
@@ -426,7 +421,6 @@ class Validator():
     @ staticmethod
     def is_graph(graph: Graph):
 
-        root = graph.root
         nodes = graph.nodes
 
         last_id = graph.last_id
@@ -454,29 +448,9 @@ class Validator():
             raise TypeError("Transitive is not bool")
 
         if not nodes:
-            if root != None:
-                warnings.warn(f" To be scrapped for v1.0.0. Unnecessary added complexity",
-                              PendingDeprecationWarning)
-                # broken graph, has root, but no node
-                logging.error(
-                    f" <'RuntimeError'> Broken graph, root without nodes")
-                raise RuntimeError("Broken graph, root without nodes")
             # Empty graph is a valid graph
             return True
 
-        if root != None:
-            warnings.warn(f" To be scrapped for v1.0.0. Unnecessary added complexity",
-                          PendingDeprecationWarning)
-            Type.is_id(root)
-            try:
-                if not root in nodes:
-                    # Broken graph, root isn't one of its nodes
-                    logging.error(f" <'KeyError'> Root not in nodes")
-                    raise KeyError("Root not in nodes")
-            except:
-                # node typing wrong
-                logging.error(f" <'TypeError'> Nodelist failed type check")
-                raise TypeError("Nodelist failed type check")
         Type.is_nodelist(nodes)
         for key, node in nodes.items():
             id_range = key <= last_id
