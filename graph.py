@@ -31,9 +31,10 @@ warnings.warn(warning, ImportWarning)
 def start_log():
     if not os.path.exists(log_dir):
         os.mkdir(log_dir)
-    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
                         datefmt="%d-%m-%y %H:%M:%S",
-                        filename=f"{log_dir}{log_name}",
+                        # f"{log_dir}{log_name}",
+                        filename=f"{log_dir}testlog.log",
                         filemode='w', level=logging.DEBUG)
 
 
