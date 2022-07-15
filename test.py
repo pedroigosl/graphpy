@@ -36,7 +36,8 @@ adjmat = [[0, 1, 2],
 graph2 = Builder.adj_matrix(adjmat)
 graph2.add_node(data=5)
 adj_list = Converter.to_adjlist(graph2, get_nodes=True)[0]
-adj_list[0].append((2, 3))
+# adj_list[0].append((2, 3))
+# adj_list = [[{0: 0}, {1: 1}, {2: 2}], [{1: 4}, {2: 5}], [{0: 6}, {2: 8}], []]
 print(adj_list)
 graph3 = Builder.adj_list(adj_list)
 

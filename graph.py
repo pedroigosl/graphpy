@@ -65,7 +65,7 @@ class Type():
         cls.adjlisttype = Union[List[List[Tuple[cls.idtype, cls.weighttype]]],
                                 npt.NDArray[npt.NDArray[Tuple[cls.idtype, cls.weighttype]]]]
 
-    @classmethod
+    @ classmethod
     def is_id(cls, id):
         try:
             check_type("id", id, cls.idtype)
@@ -76,12 +76,12 @@ class Type():
             raise TypeError("Id failed type check")
         return True
 
-    @classmethod
+    @ classmethod
     def is_data(cls, data):
         # equation = check_type("data", data, cls.datatype)
         return True
 
-    @classmethod
+    @ classmethod
     def is_flag(cls, flag):
         try:
             check_type("flag", flag, cls.flagtype)
@@ -90,7 +90,7 @@ class Type():
             raise TypeError("Flag failed type check")
         return True
 
-    @classmethod
+    @ classmethod
     def is_node(cls, node):
         try:
             check_type("node", node, cls.nodetype)
@@ -99,7 +99,7 @@ class Type():
             raise TypeError("Node failed type check")
         return True
 
-    @classmethod
+    @ classmethod
     def is_weight(cls, weight):
         try:
             check_type("weight", weight, cls.weighttype)
@@ -108,7 +108,7 @@ class Type():
             raise TypeError("Weight failed type check")
         return True
 
-    @classmethod
+    @ classmethod
     def is_nodelist(cls, nodelist):
         try:
             check_type("nodelist", nodelist, cls.nodelisttype)
@@ -121,7 +121,7 @@ class Type():
 
         return True
 
-    @classmethod
+    @ classmethod
     def is_edgelist(cls, edgelist):
         try:
             check_type("edgelist", edgelist, cls.edgelisttype)
@@ -134,7 +134,7 @@ class Type():
                 cls.is_weight(weight)
         return True
 
-    @classmethod
+    @ classmethod
     def is_adjmatrix(cls, adj_mat):
         try:
             check_type("adjmatrix", adj_mat, cls.adjmatrixtype)
@@ -148,7 +148,7 @@ class Type():
                 raise IndexError("Adjmatrix not homogeneous")
         return True
 
-    @classmethod
+    @ classmethod
     def is_adjlist(cls, adj_list):
         try:
             check_type("adjlist", adj_list, cls.adjlisttype)
@@ -248,11 +248,11 @@ class Graph():
     def __len__(self):
         return len(self.nodes)
 
-    @property
+    @ property
     def size(self):
         return self.__len__()
 
-    @classmethod
+    @ classmethod
     def set_graph_id(cls):
         cls.graph_count += 1
         return cls.graph_count - 1
@@ -423,7 +423,7 @@ class Graph():
 class Validator():
 
     # Checks whether graph is valid
-    @staticmethod
+    @ staticmethod
     def is_graph(graph: Graph):
 
         root = graph.root
@@ -489,7 +489,7 @@ class Validator():
 
     # Checks whether node is valid. Also used internally by Graph to check
     # new nodes. Hence the adding parameter (shouldn't be used externally)
-    @staticmethod
+    @ staticmethod
     def check_node(node: Type.nodetype, graph: Graph, adding=False):
         Type.is_node(node)
 
@@ -520,7 +520,7 @@ class Validator():
 class Builder():
 
     # Advanced method to build graph from adjacency matrix
-    @staticmethod
+    @ staticmethod
     def adj_matrix(adj_mat: Type.adjmatrixtype,
                    obj_list: List[Any] = None):
         nodes = {}
@@ -544,7 +544,7 @@ class Builder():
         return Graph(nodes=nodes)
 
 # Advanced method to build graph from adjacency list
-    @staticmethod
+    @ staticmethod
     def adj_list(adj_list: Type.adjlisttype,
                  obj_list: List[Any] = None):
         nodes = {}
@@ -559,7 +559,6 @@ class Builder():
                     nodes[i] = Node()
                 for j, weight in edgelist:
                     nodes[i].edges[j] = weight
-                # print(nodes.edges)
         except:
             logging.error(f" <'RuntimeError'> Broken adjacency list")
             raise RuntimeError("Broken adjacency list")
@@ -568,7 +567,7 @@ class Builder():
         return Graph(nodes=nodes)
     # Shouldn't be needed. Maybe to delete unused id
 
-    @staticmethod
+    @ staticmethod
     def refactor():
         raise NotImplementedError
         ...
@@ -579,7 +578,7 @@ class Builder():
 class Converter():
 
     # Returns an equivalent adjacency matrix and node data list
-    @staticmethod
+    @ staticmethod
     def to_adjmatrix(graph: Graph, get_nodes=False):
         try:
             Validator.is_graph(graph)
@@ -603,7 +602,7 @@ class Converter():
             logging.error(f" <'RuntimeError'> Wrong parameters in converter")
             raise RuntimeError("Wrong parameters in converter")
 
-    @staticmethod
+    @ staticmethod
     def to_adjlist(graph: Graph, get_nodes=False):
         try:
             Validator.is_graph(graph)
