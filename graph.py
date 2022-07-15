@@ -205,8 +205,7 @@ class Graph():
     # Raise exception whenever a mistake is made by default, whether fatal or not
     merciless = True
 
-    def __init__(self,
-                 nodes: Type.nodelisttype = None):
+    def __init__(self, nodes: Type.nodelisttype = None):
         if nodes == None:
             nodes = {}
 
