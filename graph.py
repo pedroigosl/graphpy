@@ -66,6 +66,8 @@ class Type():
         cls.adjlisttype = Union[List[List[Tuple[cls.idtype, cls.weighttype]]],
                                 npt.NDArray[npt.NDArray[Tuple[cls.idtype, cls.weighttype]]]]
 
+        cls.adjdicttype = Dict[cls.idtype, Union[cls.edgelisttype, None]]
+
     @ classmethod
     def is_id(cls, id):
         try:
@@ -156,6 +158,15 @@ class Type():
         except:
             logging.error(f" <'TypeError'> Adjlist failed type check")
             raise TypeError("Adjlist failed type check")
+        return True
+
+    @ classmethod
+    def is_adjdict(cls, adj_dict):
+        try:
+            check_type("adjdict", adj_dict, cls.adjdicttype)
+        except:
+            logging.error(f" <'TypeError'> Adjdict failed type check")
+            raise TypeError("Adjdict failed type check")
         return True
 
 # =============================================================================
@@ -441,7 +452,7 @@ class Builder():
         logging.info(f" Adjacency matrix is valid. Graph is being built")
         return Graph(nodes=nodes)
 
-# Advanced method to build graph from adjacency list
+    # Advanced method to build graph from adjacency list
     @ staticmethod
     def adj_list(adj_list: Type.adjlisttype,
                  obj_list: List[Any] = None):
@@ -462,6 +473,27 @@ class Builder():
             raise RuntimeError("Broken adjacency list")
 
         logging.info(f" Adjacency list is valid. Graph is being built")
+        return Graph(nodes=nodes)
+
+    # Advanced method to build graph from adjacency list
+    @ staticmethod
+    def adj_dict(adj_dict: Type.adjdicttype,
+                 obj_list: List[Any] = None):
+        nodes = {}
+        Type.is_adjdict(adj_dict)
+
+        # From here is just fodder to delete
+        try:
+            for i, edgelist in adj_dict.items():
+                if obj_list:
+                    nodes[i] = Node(data=obj_list[i])
+                else:
+                    nodes[i] = Node(edges=edgelist)
+        except:
+            logging.error(f" <'RuntimeError'> Broken adjacency dictionary")
+            raise RuntimeError("Broken adjacency dictionary")
+
+        logging.info(f" Adjacency dictionary is valid. Graph is being built")
         return Graph(nodes=nodes)
     # Shouldn't be needed. Maybe to delete unused id
 
@@ -516,6 +548,26 @@ class Converter():
             if get_nodes:
                 return adjlist, nodes
             return adjlist
+
+        except:
+            logging.error(f" <'RuntimeError'> Wrong parameters in converter")
+            raise RuntimeError("Wrong parameters in converter")
+
+    @ staticmethod
+    def to_adjdict(graph: Graph, get_nodes=False):
+        try:
+            Validator.is_graph(graph)
+            if not isinstance(get_nodes, bool):
+                logging.error(f" <'TypeError'> get_nodes is not bool")
+                raise TypeError("get_nodes is not bool")
+            adjdict = {}
+            nodes = [None for i in range(0, graph.size)]
+            for id, node in graph.nodes.items():
+                nodes[id] = node.data
+                adjdict[id] = node.edges
+            if get_nodes:
+                return adjdict, nodes
+            return adjdict
 
         except:
             logging.error(f" <'RuntimeError'> Wrong parameters in converter")

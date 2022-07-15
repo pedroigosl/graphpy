@@ -37,9 +37,10 @@ graph2 = Builder.adj_matrix(adjmat)
 graph2.add_node(data=5)
 adj_list = Converter.to_adjlist(graph2, get_nodes=True)[0]
 adj_list[0].append((2, 3))
-# adj_list = [[{0: 0}, {1: 1}, {2: 2}], [{1: 4}, {2: 5}], [{0: 6}, {2: 8}], []]
-print(adj_list)
-graph3 = Builder.adj_list(adj_list)
+# adj_dict = {0: {0: 0, 1: 1, 2: 2}, 1: {1: 4, 2: 5}, 2: {0: 6, 2: 8}, 3: None}
+adj_dict = Converter.to_adjdict(graph2, get_nodes=True)[0]
+print(adj_dict)
+graph3 = Builder.adj_dict(adj_dict)
 
 print(Type.is_adjlist(adj_list))
 graph.add_edge(7, 8, 5, symmetric=True)
