@@ -206,12 +206,7 @@ class Graph():
     merciless = True
 
     def __init__(self,
-                 nodes: Type.nodelisttype = None,
-                 weighted: bool = False,
-                 directed: bool = False,
-                 reflexive: bool = False,
-                 symmetric: bool = False,
-                 transitive: bool = False):
+                 nodes: Type.nodelisttype = None):
         if nodes == None:
             nodes = {}
 
@@ -222,16 +217,6 @@ class Graph():
         self.nodes = nodes
         # Registers last used id
         self.last_id = self.size - 1
-
-        # Graph characteristics
-        self.weighted = weighted
-        self.directed = directed
-
-        # Relation characteristics
-        self.reflexive = reflexive
-        # Equivalent to directed
-        self.symmetric = symmetric
-        self.transitive = transitive
 
         # Check whether starter graph is valid
         if self.check_graph_at_initialization:
@@ -366,45 +351,6 @@ class Graph():
                 raise KeyError("Node not found")
             return False
 
-    # Sets relations
-    def set_relations(self, reflexive=False, symmetric=False, transitive=False):
-        warnings.warn(f" To be scrapped for v1.0.0. Unnecessary added complexity",
-                      PendingDeprecationWarning)
-
-        if not isinstance(reflexive, bool):
-            logging.error(f" <'TypeError'> Reflexive is not bool")
-            raise TypeError("Reflexive is not bool")
-        if not isinstance(symmetric, bool):
-            logging.error(f" <'TypeError'> Symmetric is not bool")
-            raise TypeError("Symmetric is not bool")
-        if not isinstance(transitive, bool):
-            logging.error(f" <'TypeError'> Transitive is not bool")
-            raise TypeError("Transitive is not bool")
-
-        if ((self.reflexive != reflexive) or
-            (self.symmetric != symmetric) or
-                (self.transitive != transitive)):
-
-            self.reflexive = reflexive
-            self.symmetric = symmetric
-            self.transitive = transitive
-
-            info = (f" Relations' properties in graph #{self.graph_id} changed. New properties are:\n"
-                    f" reflexive:     {reflexive}\n"
-                    f" symmetric:     {symmetric}\n"
-                    f" transitive:    {transitive}")
-            logging.info(info)
-            return True
-
-        else:
-            warnings.warn(
-                f" <'KeyError'> Relations already as defined", RuntimeWarning)
-            logging.warning(f" <'KeyError'> Relations already as defined")
-            if self.merciless:
-                logging.error(f" <'merciless == True'> Execution stopped")
-                raise KeyError("Relations already as defined")
-            return False
-
     def get_nodes(self):
         return self.nodes
 
@@ -424,28 +370,6 @@ class Validator():
         nodes = graph.nodes
 
         last_id = graph.last_id
-
-        weighted = graph.weighted
-        if not isinstance(weighted, bool):
-            logging.error(f" <'TypeError'> Weighted is not bool")
-            raise TypeError("Weighted is not bool")
-        directed = graph.directed
-        if not isinstance(directed, bool):
-            logging.error(f" <'TypeError'> Directed is not bool")
-            raise TypeError("Directed is not bool")
-
-        reflexive = graph.reflexive
-        if not isinstance(reflexive, bool):
-            logging.error(f" <'TypeError'> Reflexive is not bool")
-            raise TypeError("Reflexive is not bool")
-        symmetric = graph.symmetric
-        if not isinstance(symmetric, bool):
-            logging.error(f" <'TypeError'> Symmetric is not bool")
-            raise TypeError("Symmetric is not bool")
-        transitive = graph.transitive
-        if not isinstance(transitive, bool):
-            logging.error(f" <'TypeError'> Transitive is not bool")
-            raise TypeError("Transitive is not bool")
 
         if not nodes:
             # Empty graph is a valid graph
