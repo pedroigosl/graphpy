@@ -33,8 +33,8 @@ def start_log():
         os.mkdir(log_dir)
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
                         datefmt="%d-%m-%y %H:%M:%S",
-                        # f"{log_dir}{log_name}",
-                        filename=f"{log_dir}testlog.log",
+                        filename=f"{log_dir}{log_name}",
+                        # filename=f"{log_dir}testlog.log",
                         filemode='w', level=logging.DEBUG)
 
 
