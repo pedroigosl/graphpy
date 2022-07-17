@@ -170,7 +170,7 @@ class Type():
         try:
             check_type("adjmatrix", adj_mat, cls.adjmatrixtype)
             mat_n = len(adj_mat)
-            for i, line in enumerate(adj_mat):
+            for line in adj_mat:
                 if len(line) != mat_n:
                     error_handler("Adjmatrix not homogeneous", "Index")
             return True
@@ -358,7 +358,7 @@ class Graph():
             if id in self.nodes:
                 popped = self.nodes.pop(id)
                 if self.size > 0:
-                    for key, node in self.nodes.items():
+                    for node in self.nodes.values():
                         if node.edges:
                             if id in node.edges:
                                 node.edges.pop(id)
