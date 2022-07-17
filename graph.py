@@ -498,9 +498,23 @@ class Builder():
     # Shouldn't be needed. Maybe to delete unused id
 
     @ staticmethod
-    def refactor():
-        raise NotImplementedError
-        ...
+    def refactor(graph: Graph):
+        try:
+            Validator.is_graph(graph)
+            new_nodes = {}
+            for new_id, node in enumerate(graph.nodes.values()):
+                node.flag = new_id
+                new_nodes[new_id] = Node(data=node.data)
+
+            for new_id, node in enumerate(graph.nodes.values()):
+                for eid, weight in node.edges.items():
+                    new_nodes[new_id].edges[graph.nodes[eid].flag] = weight
+
+            refac = Graph(new_nodes)
+            return refac
+        except:
+            logging.error(f" <'RuntimeError'> Broken graph in refactor")
+            raise RuntimeError("Broken graph in refactor")
 
 # =============================================================================
 

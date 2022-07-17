@@ -10,7 +10,7 @@ graph.add_node()
 graph.add_node()
 graph.add_edge(0, 1, 5)
 for a in range(0, 5):
-    graph.add_node(flag=a)
+    graph.add_node(data=a)
 
 # node1 = graph.add_node(edges={1: 0})
 # graph.nodes[1] = 5
@@ -49,9 +49,15 @@ graph.add_edge(7, 8, 5, symmetric=True)
 graph.add_edge(8, 8)
 # graph2.remove_node(2)
 
-for key, node in graph3.nodes.items():
-    print(key, node.flag, node.edges)
+for key, node in graph.nodes.items():
+    print(key, node.data, node.edges)
+print(graph.size, graph.last_id)
+graph = Builder.refactor(graph)
+print("---")
+for key, node in graph.nodes.items():
+    print(key, node.data, node.edges)
 
+print(graph.size, graph.last_id)
 # print(graph2.size)
 
 # for tup in graph.nodes[7].edges.items():
