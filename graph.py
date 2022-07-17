@@ -11,6 +11,9 @@ from typeguard import check_type
 import numpy as np
 import numpy.typing as npt
 
+# General configs
+MERCILESS = True
+
 # Log configs
 log_date = str(time.strftime("%d-%m-%y %H:%M:%S"))
 log_dir = "logs/"
@@ -215,7 +218,6 @@ class Graph():
     # Checks new graph by default. Can be toggled for performance
     check_graph_at_initialization = True
     # Raise exception whenever a mistake is made by default, whether fatal or not
-    merciless = True
 
     def __init__(self, nodes: Type.nodelisttype = None):
         if nodes == None:
@@ -274,7 +276,7 @@ class Graph():
         except:
             warnings.warn(f" <'KeyError'> Edge not added", RuntimeWarning)
             logging.warning(f" <'KeyError'> Edge not added")
-            if self.merciless:
+            if MERCILESS:
                 logging.error(f" <'merciless == True'> Execution stopped")
                 raise KeyError("Edge's id(s) not in nodes")
 
@@ -309,7 +311,7 @@ class Graph():
         except:
             warnings.warn(f" <'KeyError'> Edge not found", RuntimeWarning)
             logging.warning(f" <'KeyError'> Edge not found")
-            if self.merciless:
+            if MERCILESS:
                 logging.error(f" <'merciless == True'> Execution stopped")
                 raise KeyError("Edge not found")
 
@@ -334,7 +336,7 @@ class Graph():
                 f" <'KeyError'> Node not valid. Was not added", RuntimeWarning)
             logging.warning(f" <'KeyError'> Node not valid. Was not added")
 
-            if self.merciless:
+            if MERCILESS:
                 logging.error(f" <'merciless == True'> Execution stopped")
                 raise KeyError("Node not valid")
             return False
@@ -357,7 +359,7 @@ class Graph():
             warnings.warn(f" <'KeyError'> Node not found", RuntimeWarning)
             logging.warning(f" <'KeyError'> Node not found")
 
-            if self.merciless:
+            if MERCILESS:
                 logging.error(f" <'merciless == True'> Execution stopped")
                 raise KeyError("Node not found")
             return False
@@ -433,9 +435,9 @@ class Builder():
     def adj_matrix(adj_mat: Type.adjmatrixtype,
                    obj_list: List[Any] = None):
         nodes = {}
-        Type.is_adjmatrix(adj_mat)
 
         try:
+            Type.is_adjmatrix(adj_mat)
             for i, line in enumerate(adj_mat):
                 if obj_list:
                     nodes[i] = Node(data=obj_list[i])
@@ -445,22 +447,25 @@ class Builder():
                     if weight != None:
                         nodes[i].edges[j] = weight
                 # print(nodes.edges)
-        except:
-            logging.error(f" <'RuntimeError'> Broken adjacency matrix")
-            raise RuntimeError("Broken adjacency matrix")
 
-        logging.info(f" Adjacency matrix is valid. Graph is being built")
-        return Graph(nodes=nodes)
+            logging.info(f" Adjacency matrix is valid. Graph is being built")
+            return Graph(nodes=nodes)
+
+        except:
+            warnings.warn("Broken adjacency matrix", RuntimeWarning)
+            logging.warning(f"<'RuntimeError'> Broken adjacency matrix")
+            if MERCILESS:
+                logging.error(f" <'merciless == True'> Execution stopped")
+                raise RuntimeError("Broken adjacency matrix")
 
     # Advanced method to build graph from adjacency list
     @ staticmethod
     def adj_list(adj_list: Type.adjlisttype,
                  obj_list: List[Any] = None):
         nodes = {}
-        Type.is_adjlist(adj_list)
 
-        # From here is just fodder to delete
         try:
+            Type.is_adjlist(adj_list)
             for i, edgelist in enumerate(adj_list):
                 if obj_list:
                     nodes[i] = Node(data=obj_list[i])
@@ -468,33 +473,39 @@ class Builder():
                     nodes[i] = Node()
                 for j, weight in edgelist:
                     nodes[i].edges[j] = weight
-        except:
-            logging.error(f" <'RuntimeError'> Broken adjacency list")
-            raise RuntimeError("Broken adjacency list")
 
-        logging.info(f" Adjacency list is valid. Graph is being built")
-        return Graph(nodes=nodes)
+            logging.info(f" Adjacency list is valid. Graph is being built")
+            return Graph(nodes=nodes)
+        except:
+            warnings.warn("Broken adjacency list", RuntimeWarning)
+            logging.warning(f"<'RuntimeError'> Broken adjacency list")
+            if MERCILESS:
+                logging.error(f" <'merciless == True'> Execution stopped")
+                raise RuntimeError("Broken adjacency list")
 
     # Advanced method to build graph from adjacency list
     @ staticmethod
     def adj_dict(adj_dict: Type.adjdicttype,
                  obj_list: List[Any] = None):
         nodes = {}
-        Type.is_adjdict(adj_dict)
 
-        # From here is just fodder to delete
         try:
+            Type.is_adjdict(adj_dict)
             for i, edgelist in adj_dict.items():
                 if obj_list:
                     nodes[i] = Node(data=obj_list[i])
                 else:
                     nodes[i] = Node(edges=edgelist)
+            logging.info(
+                f" Adjacency dictionary is valid. Graph is being built")
+            return Graph(nodes=nodes)
         except:
-            logging.error(f" <'RuntimeError'> Broken adjacency dictionary")
-            raise RuntimeError("Broken adjacency dictionary")
+            warnings.warn("Broken adjacency dictionary", RuntimeWarning)
+            logging.warning(f"<'RuntimeError'> Broken adjacency dictionary")
+            if MERCILESS:
+                logging.error(f" <'merciless == True'> Execution stopped")
+                raise RuntimeError("Broken adjacency dictionary")
 
-        logging.info(f" Adjacency dictionary is valid. Graph is being built")
-        return Graph(nodes=nodes)
     # Shouldn't be needed. Maybe to delete unused id
 
     @ staticmethod
@@ -513,8 +524,11 @@ class Builder():
             refac = Graph(new_nodes)
             return refac
         except:
-            logging.error(f" <'RuntimeError'> Broken graph in refactor")
-            raise RuntimeError("Broken graph in refactor")
+            warnings.warn("Broken graph in refactor", RuntimeWarning)
+            logging.warning(f"<'RuntimeError'> Broken graph in refactor")
+            if MERCILESS:
+                logging.error(f" <'merciless == True'> Execution stopped")
+                raise RuntimeError("Broken graph in refactor")
 
 # =============================================================================
 
@@ -543,8 +557,11 @@ class Converter():
             return adjmatrix
 
         except:
-            logging.error(f" <'RuntimeError'> Wrong parameters in converter")
-            raise RuntimeError("Wrong parameters in converter")
+            warnings.warn("Wrong parameters in converter", RuntimeWarning)
+            logging.warning(f"<'RuntimeError'> Wrong parameters in converter")
+            if MERCILESS:
+                logging.error(f" <'merciless == True'> Execution stopped")
+                raise RuntimeError("Wrong parameters in converter")
 
     @ staticmethod
     def to_adjlist(graph: Graph, get_nodes=False):
@@ -564,8 +581,11 @@ class Converter():
             return adjlist
 
         except:
-            logging.error(f" <'RuntimeError'> Wrong parameters in converter")
-            raise RuntimeError("Wrong parameters in converter")
+            warnings.warn("Wrong parameters in converter", RuntimeWarning)
+            logging.warning(f"<'RuntimeError'> Wrong parameters in converter")
+            if MERCILESS:
+                logging.error(f" <'merciless == True'> Execution stopped")
+                raise RuntimeError("Wrong parameters in converter")
 
     @ staticmethod
     def to_adjdict(graph: Graph, get_nodes=False):
@@ -584,8 +604,11 @@ class Converter():
             return adjdict
 
         except:
-            logging.error(f" <'RuntimeError'> Wrong parameters in converter")
-            raise RuntimeError("Wrong parameters in converter")
+            warnings.warn("Wrong parameters in converter", RuntimeWarning)
+            logging.warning(f"<'RuntimeError'> Wrong parameters in converter")
+            if MERCILESS:
+                logging.error(f" <'merciless == True'> Execution stopped")
+                raise RuntimeError("Wrong parameters in converter")
 
 
 # =============================================================================

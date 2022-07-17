@@ -1,3 +1,5 @@
+
+import graph as gr
 from graph import Graph, Builder, Converter, Type
 import numpy as np
 
@@ -32,8 +34,8 @@ adjmat = [[0, 1, 2],
 # for i, line in enumerate(adjmat):
 #     for j, weight in enumerate(line):
 #         print(i, j, weight)
-
-graph2 = Builder.adj_matrix(adjmat)
+gr.MERCILESS = False
+graph2 = Builder.adj_matrix(5)  # adjmat)
 graph2.add_node(data=5)
 adj_list = Converter.to_adjlist(graph2, get_nodes=True)[0]
 adj_list[0].append((2, 3))
@@ -44,8 +46,9 @@ graph3 = Builder.adj_dict(adj_dict)
 
 print(Type.is_adjlist(adj_list))
 graph.add_edge(7, 8, 5, symmetric=True)
-# graph.merciless = False
-# graph.remove_edge(5, 7)
+graph.merciless = False
+gr.MERCILESS = False
+graph.remove_edge(5, 7)
 graph.add_edge(8, 8)
 # graph2.remove_node(2)
 
