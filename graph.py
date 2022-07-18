@@ -11,6 +11,12 @@ from typeguard import check_type
 import numpy as np
 import numpy.typing as npt
 
+# General configs
+# # Raise error whenever there is a mistake, even if not critical
+MERCILESS = True
+# # Writes graph on log whenever there is a change
+VERBOSE = False
+
 # Log configs
 log_date = str(time.strftime("%d-%m-%y %H:%M:%S"))
 log_dir = "logs/"
@@ -33,9 +39,34 @@ def start_log():
         os.mkdir(log_dir)
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
                         datefmt="%d-%m-%y %H:%M:%S",
-                        # f"{log_dir}{log_name}",
-                        filename=f"{log_dir}testlog.log",
+                        filename=f"{log_dir}{log_name}",
+                        # filename=f"{log_dir}testlog.log",
                         filemode='w', level=logging.DEBUG)
+
+
+def error_handler(message, type):
+    if type == 'Runtime':
+        error = RuntimeError
+        warning = RuntimeWarning
+
+    if type == 'Type':
+        error = TypeError
+        warning = RuntimeWarning
+
+    if type == 'Index':
+        error = IndexError
+        warning = RuntimeWarning
+
+    if type == 'Key':
+        error = KeyError
+        warning = RuntimeWarning
+
+    warnings.warn(message, warning)
+    logging.warning(f" <'{type}Error'> {message}")
+    if MERCILESS:
+        logging.error(f" <'merciless == True'> Execution stopped")
+        raise error(message)
+        ...
 
 
 # Starts essential auxiliary classes
@@ -43,6 +74,9 @@ def start_classes():
     Type()
     Validator()
     Node()
+    Converter()
+    Builder()
+
 
 # =============================================================================
 
@@ -73,11 +107,11 @@ class Type():
         try:
             check_type("id", id, cls.idtype)
             if not id >= 0:
-                raise
+                error_handler("Id out of bounds", "Key")
+            return True
         except:
-            logging.error(f" <'TypeError'> Id failed type check")
-            raise TypeError("Id failed type check")
-        return True
+            error_handler("Id failed type check", "Type")
+            return False
 
     @ classmethod
     def is_data(cls, data):
@@ -88,86 +122,84 @@ class Type():
     def is_flag(cls, flag):
         try:
             check_type("flag", flag, cls.flagtype)
+            return True
         except:
-            logging.error(f" <'TypeError'> Flag failed type check")
-            raise TypeError("Flag failed type check")
-        return True
+            error_handler("Flag failed type check", "Type")
+            return False
 
     @ classmethod
     def is_node(cls, node):
         try:
             check_type("node", node, cls.nodetype)
+            return True
         except:
-            logging.error(f" <'TypeError'> Node failed type check")
-            raise TypeError("Node failed type check")
-        return True
+            error_handler("Node failed type check", "Type")
+            return False
 
     @ classmethod
     def is_weight(cls, weight):
         try:
             check_type("weight", weight, cls.weighttype)
+            return True
         except:
-            logging.error(f" <'TypeError'> Weight failed type check")
-            raise TypeError("Weight failed type check")
-        return True
+            error_handler("Weight failed type check", "Type")
+            return False
 
     @ classmethod
     def is_nodelist(cls, nodelist):
         try:
             check_type("nodelist", nodelist, cls.nodelisttype)
+            for key, val in nodelist.items():
+                cls.is_id(key)
+                cls.is_node(val)
+            return True
         except:
-            logging.error(f" <'TypeError'> Nodelist failed type check")
-            raise TypeError("Nodelist failed type check")
-        for key, val in nodelist.items():
-            cls.is_id(key)
-            cls.is_node(val)
-
-        return True
+            error_handler("nodelist failed type check", "Type")
+            return False
 
     @ classmethod
     def is_edgelist(cls, edgelist):
         try:
             check_type("edgelist", edgelist, cls.edgelisttype)
+            for key, weight in edgelist.items():
+                cls.is_id(key)
+                if weight != None:
+                    cls.is_weight(weight)
+            return True
         except:
-            logging.error(f" <'TypeError'> Edgelist failed type check")
-            raise TypeError("Edgelist failed type check")
-        for key, weight in edgelist.items():
-            cls.is_id(key)
-            if weight != None:
-                cls.is_weight(weight)
-        return True
+            error_handler("edgelist failed type check", "Type")
+            return False
 
     @ classmethod
     def is_adjmatrix(cls, adj_mat):
         try:
             check_type("adjmatrix", adj_mat, cls.adjmatrixtype)
+            mat_n = len(adj_mat)
+            for line in adj_mat:
+                if len(line) != mat_n:
+                    error_handler("Adjmatrix not homogeneous", "Index")
+            return True
         except:
-            logging.error(f" <'TypeError'> Adjmatrix failed type check")
-            raise TypeError("Adjmatrix failed type check")
-        mat_n = len(adj_mat)
-        for i, line in enumerate(adj_mat):
-            if len(line) != mat_n:
-                logging.error(f" <'IndexError'> Adjmatrix not homogeneous")
-                raise IndexError("Adjmatrix not homogeneous")
-        return True
+            error_handler("adjmatrix failed type check", "Type")
+            return False
 
     @ classmethod
     def is_adjlist(cls, adj_list):
         try:
             check_type("adjlist", adj_list, cls.adjlisttype)
+            return True
         except:
-            logging.error(f" <'TypeError'> Adjlist failed type check")
-            raise TypeError("Adjlist failed type check")
-        return True
+            error_handler("adjlist failed type check", "Type")
+            return False
 
     @ classmethod
     def is_adjdict(cls, adj_dict):
         try:
             check_type("adjdict", adj_dict, cls.adjdicttype)
+            return True
         except:
-            logging.error(f" <'TypeError'> Adjdict failed type check")
-            raise TypeError("Adjdict failed type check")
-        return True
+            error_handler("adjdict failed type check", "Type")
+            return False
 
 # =============================================================================
 
@@ -215,7 +247,6 @@ class Graph():
     # Checks new graph by default. Can be toggled for performance
     check_graph_at_initialization = True
     # Raise exception whenever a mistake is made by default, whether fatal or not
-    merciless = True
 
     def __init__(self, nodes: Type.nodelisttype = None):
         if nodes == None:
@@ -235,6 +266,8 @@ class Graph():
 
         logging.info(
             f" Graph #{self.graph_id} initialized with size {self.size}")
+        if VERBOSE:
+            logging.info(str(Converter.to_adjdict(self)))
 
     def __len__(self):
         return len(self.nodes)
@@ -258,36 +291,33 @@ class Graph():
             Type.is_id(dest_id)
             Type.is_weight(weight)
             if not isinstance(symmetric, bool):
-                logging.error(f" <'TypeError'> Symmetric is not bool")
-                raise TypeError("Symmetric is not bool")
+                error_handler("Symmetric is not bool", "Type")
 
             if not (main_id in self.nodes and dest_id in self.nodes):
-                raise KeyError("Edge id not found")
+                error_handler("Edge id not found", "Key")
 
             self.nodes[main_id].edges[dest_id] = weight
             logging.info(
                 f" Edge ({main_id}->{dest_id} [{weight}]) added to graph #{self.graph_id}")
+            if VERBOSE:
+                logging.info(str(Converter.to_adjdict(self)))
             if symmetric:
                 self.add_edge(dest_id, main_id, weight)
             return True
 
         except:
-            warnings.warn(f" <'KeyError'> Edge not added", RuntimeWarning)
-            logging.warning(f" <'KeyError'> Edge not added")
-            if self.merciless:
-                logging.error(f" <'merciless == True'> Execution stopped")
-                raise KeyError("Edge's id(s) not in nodes")
+            error_handler("Edge's id(s) not in nodes", "Key")
+            return False
 
     def remove_edge(self, main_id: Type.idtype, dest_id: Type.idtype, symmetric: bool = False):
         try:
             Type.is_id(main_id)
             Type.is_id(dest_id)
             if not isinstance(symmetric, bool):
-                logging.error(f" <'TypeError'> Symmetric is not bool")
-                raise TypeError("Symmetric is not bool")
+                error_handler("Symmetric is not bool", "Type")
 
             if not (main_id in self.nodes and dest_id in self.nodes):
-                raise KeyError("Edge id not found")
+                error_handler("Edge id not found", "Key")
 
             popped = False
 
@@ -297,6 +327,8 @@ class Graph():
                     node.edges.pop(dest_id)
                     logging.info(
                         f" Edge ({main_id}->{dest_id}) removed from graph #{self.graph_id}")
+                    if VERBOSE:
+                        logging.info(str(Converter.to_adjdict(self)))
                     popped = True
 
             if symmetric:
@@ -304,14 +336,11 @@ class Graph():
                     popped = True
 
             if not popped:
-                raise KeyError("Edge not found")
+                error_handler("Edge not found", "Key")
             return True
         except:
-            warnings.warn(f" <'KeyError'> Edge not found", RuntimeWarning)
-            logging.warning(f" <'KeyError'> Edge not found")
-            if self.merciless:
-                logging.error(f" <'merciless == True'> Execution stopped")
-                raise KeyError("Edge not found")
+            error_handler("Edge not found", "Key")
+            return False
 
     # Adds nodes with data, flag and edges when applicable
     def add_node(self, data: Type.datatype = None,
@@ -327,16 +356,12 @@ class Graph():
             self.last_id += 1
 
             logging.info(f" Node #{new_id} added to graph #{self.graph_id}")
+            if VERBOSE:
+                logging.info(str(Converter.to_adjdict(self)))
 
             return new_node
         except:
-            warnings.warn(
-                f" <'KeyError'> Node not valid. Was not added", RuntimeWarning)
-            logging.warning(f" <'KeyError'> Node not valid. Was not added")
-
-            if self.merciless:
-                logging.error(f" <'merciless == True'> Execution stopped")
-                raise KeyError("Node not valid")
+            error_handler("Node not valid. Was not added", "Key")
             return False
 
     # Removes nodes and all edges pointing to it
@@ -346,20 +371,18 @@ class Graph():
             if id in self.nodes:
                 popped = self.nodes.pop(id)
                 if self.size > 0:
-                    for key, node in self.nodes.items():
+                    for node in self.nodes.values():
                         if node.edges:
                             if id in node.edges:
                                 node.edges.pop(id)
                 logging.info(
                     f" Node #{id} removed from graph #{self.graph_id}")
+                if VERBOSE:
+                    logging.info(
+                        str(Converter.to_adjdict(self)))
                 return popped
         except:
-            warnings.warn(f" <'KeyError'> Node not found", RuntimeWarning)
-            logging.warning(f" <'KeyError'> Node not found")
-
-            if self.merciless:
-                logging.error(f" <'merciless == True'> Execution stopped")
-                raise KeyError("Node not found")
+            error_handler("Node not found", "Key")
             return False
 
     def get_nodes(self):
@@ -377,50 +400,50 @@ class Validator():
     # Checks whether graph is valid
     @ staticmethod
     def is_graph(graph: Graph):
+        try:
+            nodes = graph.nodes
 
-        nodes = graph.nodes
+            last_id = graph.last_id
 
-        last_id = graph.last_id
+            if not nodes:
+                # Empty graph is a valid graph
+                return True
 
-        if not nodes:
-            # Empty graph is a valid graph
+            Type.is_nodelist(nodes)
+            for key, node in nodes.items():
+                id_range = key <= last_id
+                id_checks = id_range
+                if not id_checks:
+                    error_handler("Id not in graph range", "Index")
+                Validator.check_node(node, graph)
             return True
-
-        Type.is_nodelist(nodes)
-        for key, node in nodes.items():
-            id_range = key <= last_id
-            id_checks = id_range
-            if not id_checks:
-                logging.error(f" <'IndexError'> Id not in graph range")
-                raise IndexError("Id not in graph range")
-            Validator.check_node(node, graph)
-        return True
+        except:
+            error_handler("Graph failed type check", "Type")
+            return False
 
     # Checks whether node is valid. Also used internally by Graph to check
     # new nodes. Hence the adding parameter (shouldn't be used externally)
     @ staticmethod
     def check_node(node: Type.nodetype, graph: Graph, adding=False):
-        Type.is_node(node)
 
         try:
+            Type.is_node(node)
             check_type("graph", graph, Graph)
+            Type.is_nodelist(graph.nodes)
+            flag = node.flag
+            if flag:
+                Type.is_flag(flag)
+            if node.edges != {}:
+                Type.is_edgelist(node.edges)
+                for key, weight in node.edges.items():
+                    if key not in graph.nodes:
+                        if not (adding and key == graph.last_id + 1):
+                            error_handler("Edge node not in nodes", "Key")
+                    Type.is_weight(weight)
+            return True
         except:
-            logging.error(f" <'TypeError'> Graph failed type check")
-            raise TypeError("Graph failed type check")
-
-        Type.is_nodelist(graph.nodes)
-        flag = node.flag
-        if flag:
-            Type.is_flag(flag)
-        if node.edges != None:
-            Type.is_edgelist(node.edges)
-            for key, weight in node.edges.items():
-                if key not in graph.nodes:
-                    if not (adding and key == graph.last_id + 1):
-                        logging.error(f" <'KeyError'> Edge node not in nodes")
-                        raise KeyError("Edge node not in nodes")
-                Type.is_weight(weight)
-        return True
+            error_handler("Node failed type check", "Type")
+            return False
 
 # =============================================================================
 
@@ -433,9 +456,9 @@ class Builder():
     def adj_matrix(adj_mat: Type.adjmatrixtype,
                    obj_list: List[Any] = None):
         nodes = {}
-        Type.is_adjmatrix(adj_mat)
 
         try:
+            Type.is_adjmatrix(adj_mat)
             for i, line in enumerate(adj_mat):
                 if obj_list:
                     nodes[i] = Node(data=obj_list[i])
@@ -444,23 +467,22 @@ class Builder():
                 for j, weight in enumerate(line):
                     if weight != None:
                         nodes[i].edges[j] = weight
-                # print(nodes.edges)
-        except:
-            logging.error(f" <'RuntimeError'> Broken adjacency matrix")
-            raise RuntimeError("Broken adjacency matrix")
 
-        logging.info(f" Adjacency matrix is valid. Graph is being built")
-        return Graph(nodes=nodes)
+            logging.info(f" Adjacency matrix is valid. Graph is being built")
+            return Graph(nodes=nodes)
+
+        except:
+            error_handler("Broken adjacency matrix", "Runtime")
+            return False
 
     # Advanced method to build graph from adjacency list
     @ staticmethod
     def adj_list(adj_list: Type.adjlisttype,
                  obj_list: List[Any] = None):
         nodes = {}
-        Type.is_adjlist(adj_list)
 
-        # From here is just fodder to delete
         try:
+            Type.is_adjlist(adj_list)
             for i, edgelist in enumerate(adj_list):
                 if obj_list:
                     nodes[i] = Node(data=obj_list[i])
@@ -468,34 +490,32 @@ class Builder():
                     nodes[i] = Node()
                 for j, weight in edgelist:
                     nodes[i].edges[j] = weight
-        except:
-            logging.error(f" <'RuntimeError'> Broken adjacency list")
-            raise RuntimeError("Broken adjacency list")
 
-        logging.info(f" Adjacency list is valid. Graph is being built")
-        return Graph(nodes=nodes)
+            logging.info(f" Adjacency list is valid. Graph is being built")
+            return Graph(nodes=nodes)
+        except:
+            error_handler("Broken adjacency list", "Runtime")
+            return False
 
     # Advanced method to build graph from adjacency list
     @ staticmethod
     def adj_dict(adj_dict: Type.adjdicttype,
                  obj_list: List[Any] = None):
         nodes = {}
-        Type.is_adjdict(adj_dict)
 
-        # From here is just fodder to delete
         try:
+            Type.is_adjdict(adj_dict)
             for i, edgelist in adj_dict.items():
                 if obj_list:
                     nodes[i] = Node(data=obj_list[i])
                 else:
                     nodes[i] = Node(edges=edgelist)
+            logging.info(
+                f" Adjacency dictionary is valid. Graph is being built")
+            return Graph(nodes=nodes)
         except:
-            logging.error(f" <'RuntimeError'> Broken adjacency dictionary")
-            raise RuntimeError("Broken adjacency dictionary")
-
-        logging.info(f" Adjacency dictionary is valid. Graph is being built")
-        return Graph(nodes=nodes)
-    # Shouldn't be needed. Maybe to delete unused id
+            error_handler("Broken adjacency dictionary", "Runtime")
+            return False
 
     @ staticmethod
     def refactor(graph: Graph):
@@ -513,8 +533,8 @@ class Builder():
             refac = Graph(new_nodes)
             return refac
         except:
-            logging.error(f" <'RuntimeError'> Broken graph in refactor")
-            raise RuntimeError("Broken graph in refactor")
+            error_handler("Broken graph in refactor", "Runtime")
+            return False
 
 # =============================================================================
 
@@ -527,12 +547,10 @@ class Converter():
         try:
             Validator.is_graph(graph)
             if not isinstance(get_nodes, bool):
-                logging.error(f" <'TypeError'> get_nodes is not bool")
-                raise TypeError("get_nodes is not bool")
-
-            adjmatrix = [[None for j in range(0, graph.size)]
-                         for i in range(0, graph.size)]
-            nodes = [None for i in range(0, graph.size)]
+                error_handler("get_nodes is not bool", "Type")
+            adjmatrix = [[None for j in range(0, graph.last_id + 1)]
+                         for i in range(0, graph.last_id + 1)]
+            nodes = [None for i in range(0, graph.last_id + 1)]
             for main_id, node in graph.nodes.items():
                 nodes[main_id] = node.data
                 for dest_id, weight in node.edges.items():
@@ -543,19 +561,18 @@ class Converter():
             return adjmatrix
 
         except:
-            logging.error(f" <'RuntimeError'> Wrong parameters in converter")
-            raise RuntimeError("Wrong parameters in converter")
+            error_handler("Wrong parameters in converter", "Runtime")
+            return False
 
     @ staticmethod
     def to_adjlist(graph: Graph, get_nodes=False):
         try:
             Validator.is_graph(graph)
             if not isinstance(get_nodes, bool):
-                logging.error(f" <'TypeError'> get_nodes is not bool")
-                raise TypeError("get_nodes is not bool")
+                error_handler("get_nodes is not bool", "Type")
 
-            adjlist = [None for i in range(0, graph.size)]
-            nodes = [None for i in range(0, graph.size)]
+            adjlist = [None for i in range(0, graph.last_id + 1)]
+            nodes = [None for i in range(0, graph.last_id + 1)]
             for id, node in graph.nodes.items():
                 nodes[id] = node.data
                 adjlist[id] = list(node.edges.items())
@@ -564,18 +581,17 @@ class Converter():
             return adjlist
 
         except:
-            logging.error(f" <'RuntimeError'> Wrong parameters in converter")
-            raise RuntimeError("Wrong parameters in converter")
+            error_handler("Wrong parameters in converter", "Runtime")
+            return False
 
     @ staticmethod
     def to_adjdict(graph: Graph, get_nodes=False):
         try:
             Validator.is_graph(graph)
             if not isinstance(get_nodes, bool):
-                logging.error(f" <'TypeError'> get_nodes is not bool")
-                raise TypeError("get_nodes is not bool")
+                error_handler("get_nodes is not bool", "Type")
             adjdict = {}
-            nodes = [None for i in range(0, graph.size)]
+            nodes = [None for i in range(0, graph.last_id + 1)]
             for id, node in graph.nodes.items():
                 nodes[id] = node.data
                 adjdict[id] = node.edges
@@ -584,8 +600,8 @@ class Converter():
             return adjdict
 
         except:
-            logging.error(f" <'RuntimeError'> Wrong parameters in converter")
-            raise RuntimeError("Wrong parameters in converter")
+            error_handler("Wrong parameters in converter", "Runtime")
+            return False
 
 
 # =============================================================================
