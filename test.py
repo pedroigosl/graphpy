@@ -20,8 +20,9 @@ graph.add_node(edges={0: 1, 5: 0})
 graph.add_node()
 
 graph.add_edge(7, 3)
+# print("original", Converter.to_adjdict(graph))
 graph.remove_node(2)
-
+print("refactored", Converter.to_adjlist(graph))
 
 adjmat = [[0, 1, 2],
           [None, 4, 5],

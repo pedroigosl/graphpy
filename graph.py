@@ -12,7 +12,10 @@ import numpy as np
 import numpy.typing as npt
 
 # General configs
+# # Raise error whenever there is a mistake, even if not critical
 MERCILESS = True
+# # Writes graph on log whenever there is a change
+VERBOSE = False
 
 # Log configs
 log_date = str(time.strftime("%d-%m-%y %H:%M:%S"))
@@ -71,6 +74,8 @@ def start_classes():
     Type()
     Validator()
     Node()
+    Converter()
+    Builder()
 
 
 # =============================================================================
@@ -261,6 +266,8 @@ class Graph():
 
         logging.info(
             f" Graph #{self.graph_id} initialized with size {self.size}")
+        if VERBOSE:
+            logging.info(str(Converter.to_adjdict(self)))
 
     def __len__(self):
         return len(self.nodes)
@@ -292,6 +299,8 @@ class Graph():
             self.nodes[main_id].edges[dest_id] = weight
             logging.info(
                 f" Edge ({main_id}->{dest_id} [{weight}]) added to graph #{self.graph_id}")
+            if VERBOSE:
+                logging.info(str(Converter.to_adjdict(self)))
             if symmetric:
                 self.add_edge(dest_id, main_id, weight)
             return True
@@ -318,6 +327,8 @@ class Graph():
                     node.edges.pop(dest_id)
                     logging.info(
                         f" Edge ({main_id}->{dest_id}) removed from graph #{self.graph_id}")
+                    if VERBOSE:
+                        logging.info(str(Converter.to_adjdict(self)))
                     popped = True
 
             if symmetric:
@@ -345,6 +356,8 @@ class Graph():
             self.last_id += 1
 
             logging.info(f" Node #{new_id} added to graph #{self.graph_id}")
+            if VERBOSE:
+                logging.info(str(Converter.to_adjdict(self)))
 
             return new_node
         except:
@@ -364,6 +377,9 @@ class Graph():
                                 node.edges.pop(id)
                 logging.info(
                     f" Node #{id} removed from graph #{self.graph_id}")
+                if VERBOSE:
+                    logging.info(
+                        str(Converter.to_adjdict(self)))
                 return popped
         except:
             error_handler("Node not found", "Key")
@@ -532,10 +548,9 @@ class Converter():
             Validator.is_graph(graph)
             if not isinstance(get_nodes, bool):
                 error_handler("get_nodes is not bool", "Type")
-
-            adjmatrix = [[None for j in range(0, graph.size)]
-                         for i in range(0, graph.size)]
-            nodes = [None for i in range(0, graph.size)]
+            adjmatrix = [[None for j in range(0, graph.last_id + 1)]
+                         for i in range(0, graph.last_id + 1)]
+            nodes = [None for i in range(0, graph.last_id + 1)]
             for main_id, node in graph.nodes.items():
                 nodes[main_id] = node.data
                 for dest_id, weight in node.edges.items():
@@ -556,8 +571,8 @@ class Converter():
             if not isinstance(get_nodes, bool):
                 error_handler("get_nodes is not bool", "Type")
 
-            adjlist = [None for i in range(0, graph.size)]
-            nodes = [None for i in range(0, graph.size)]
+            adjlist = [None for i in range(0, graph.last_id + 1)]
+            nodes = [None for i in range(0, graph.last_id + 1)]
             for id, node in graph.nodes.items():
                 nodes[id] = node.data
                 adjlist[id] = list(node.edges.items())
@@ -576,7 +591,7 @@ class Converter():
             if not isinstance(get_nodes, bool):
                 error_handler("get_nodes is not bool", "Type")
             adjdict = {}
-            nodes = [None for i in range(0, graph.size)]
+            nodes = [None for i in range(0, graph.last_id + 1)]
             for id, node in graph.nodes.items():
                 nodes[id] = node.data
                 adjdict[id] = node.edges
