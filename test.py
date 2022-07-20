@@ -57,8 +57,10 @@ graph.add_edge(8, 8)
 for key, node in graph.nodes.items():
     print(key, node.data, node.edges)
 print(graph.size, graph.last_id)
-graph = Builder.refactor(graph)
 print("---")
+# graph = Builder.refactor(graph)
+# graph.remove_edge(7, 8)
+# graph.remove_edge(8, 7, symmetric=True)
 for key, node in graph.nodes.items():
     print(key, node.data, node.edges)
 

@@ -28,13 +28,17 @@ warnings.simplefilter("always")
 
 # Import warning
 warning = f" This library is a work in progress and not yet functional"
+
 warnings.warn(warning, ImportWarning)
 
 # =============================================================================
 
 
-# Sets up log when import is made
+# Sets up log
 def start_log():
+    """
+    Sets up log when import is made
+    """
     if not os.path.exists(log_dir):
         os.mkdir(log_dir)
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
@@ -44,7 +48,18 @@ def start_log():
                         filemode='w', level=logging.DEBUG)
 
 
+# Handles errors and warning messages
 def error_handler(message, type):
+    """
+    Handles errors and warning messages, logging everything
+    When MERCILESS == True, raises an error
+    Args:
+        message (str): Message to be thrown
+        type (str): Error type to be thrown
+
+    Raises:
+        error: Error according to type
+    """
     if type == 'Runtime':
         error = RuntimeError
         warning = RuntimeWarning
@@ -69,8 +84,11 @@ def error_handler(message, type):
         ...
 
 
-# Starts essential auxiliary classes
+# Start classes
 def start_classes():
+    """
+    Start essential auxiliary classes at import
+    """
     Type()
     Validator()
     Node()
@@ -80,10 +98,18 @@ def start_classes():
 
 # =============================================================================
 
-
-# Type setting
+# Type class. Determines lib specific data types. Used in type checks
 class Type():
+    """
+    Type handler
+    Determines lib specific data types 
+    Used in type checks
+    Each function checks a different type
+    Calls error handler whenever an inconsistency is found
 
+    Returns:
+        Bool: Whether input is of predetermined type
+    """
     @classmethod
     def __init__(cls):
         cls.idtype = int
@@ -204,16 +230,32 @@ class Type():
 # =============================================================================
 
 
+# Node class. Creates node objects with data, flag and edges
 class Node():
+    """
+    Node class
+    Creates node objects with data, flag and edges
+    Creates empty edges as an empty dictionary when no edge is called 
+    """
+
     def __init__(self,
                  data: Type.datatype = None,
                  flag: Type.flagtype = None,
                  edges: Type.edgelisttype = None):
+        """
+        Initializes a node
+
+        Args:
+            data (Type.datatype, optional): Internal node data. Defaults to None.
+            flag (Type.flagtype, optional): Node flag. Defaults to None.
+            edges (Type.edgelisttype, optional): Node edges. Defaults to None.
+        """
         # your object
         self.data = data
         # int, float or str. May be used for node markings
         self.flag = flag
         # Dict{id : weight}
+        # Check and attribution necessary due to dictionary particulars
         if edges == None:
             edges = {}
         self.edges = edges
@@ -239,7 +281,15 @@ class Node():
 # =============================================================================
 
 
+# Graph class. Handles graphs and operations on them
 class Graph():
+    """
+    Graph class
+    Handles graphs and operations on them
+    Keeps object count
+    Keeps class specific toggles
+    """
+
     # Each graph has a specific class id for logging purposes
     graph_count = 0
 
@@ -249,13 +299,23 @@ class Graph():
     # Raise exception whenever a mistake is made by default, whether fatal or not
 
     def __init__(self, nodes: Type.nodelisttype = None):
+        """
+        Initializes new graph objects and call validators
+        Calls class specific functions to deal with class attributes
+
+        Args:
+            nodes (Type.nodelisttype, optional): Dict {id: Node} of nodes. Defaults to None.
+        """
+
+        # Dict{id : Node}
+        # Check and attribution necessary due to dictionary particulars
         if nodes == None:
             nodes = {}
 
         # Sets graph id
         self.graph_id = self.set_graph_id()
 
-        # Dict{id : node}
+        # Dict{id : Node}
         self.nodes = nodes
         # Registers last used id
         self.last_id = self.size - 1
@@ -278,6 +338,11 @@ class Graph():
 
     @ classmethod
     def set_graph_id(cls):
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
         cls.graph_count += 1
         return cls.graph_count - 1
 
@@ -286,6 +351,19 @@ class Graph():
                  dest_id: Type.idtype,
                  weight: Type.weighttype = 0,
                  symmetric: bool = False):
+        """
+        Adds edge main_id -> dest_id with weight when applicable
+        Adds edge symmetrically (if (a,b) in edges, then (b, a) also in edges)) when toggled
+
+        Args:
+            main_id (Type.idtype): Edge origin node. Where edge is stored
+            dest_id (Type.idtype): Edge destiny node. Key on edges in node[main_id]
+            weight (Type.weighttype, optional): Edge weight. Defaults to 0.
+            symmetric (bool, optional): Whether edge is to be added symmetrically. Defaults to False.
+
+        Returns:
+            Bool: Whether edge was added or not
+        """
         try:
             Type.is_id(main_id)
             Type.is_id(dest_id)
@@ -310,6 +388,18 @@ class Graph():
             return False
 
     def remove_edge(self, main_id: Type.idtype, dest_id: Type.idtype, symmetric: bool = False):
+        """
+        Removes edge main_id -> dest_id
+        Removes edge symmetrically (if (a,b) in edges, then (b, a) also in edges)) when toggled
+
+        Args:
+            main_id (Type.idtype): Edge origin node. Where edge is stored
+            dest_id (Type.idtype): Edge destiny node. Key on edges in node[main_id]
+            symmetric (bool, optional): Whether edge is to be removed symmetrically. Defaults to False.
+
+        Returns:
+            Bool: Whether edge was removed or not
+        """
         try:
             Type.is_id(main_id)
             Type.is_id(dest_id)
@@ -319,7 +409,8 @@ class Graph():
             if not (main_id in self.nodes and dest_id in self.nodes):
                 error_handler("Edge id not found", "Key")
 
-            popped = False
+            if symmetric:
+                self.remove_edge(dest_id, main_id)
 
             node = self.nodes[main_id]
             if node.edges:
@@ -329,15 +420,8 @@ class Graph():
                         f" Edge ({main_id}->{dest_id}) removed from graph #{self.graph_id}")
                     if VERBOSE:
                         logging.info(str(Converter.to_adjdict(self)))
-                    popped = True
-
-            if symmetric:
-                if self.remove_edge(dest_id, main_id):
-                    popped = True
-
-            if not popped:
-                error_handler("Edge not found", "Key")
-            return True
+                    return True
+            error_handler("Edge not found", "Key")
         except:
             error_handler("Edge not found", "Key")
             return False
@@ -346,6 +430,18 @@ class Graph():
     def add_node(self, data: Type.datatype = None,
                  flag: Type.flagtype = None,
                  edges: Type.edgelist = None):
+        """
+        Adds nodes with data, flag and edges when applicable
+
+        Args:
+            data (Type.datatype, optional): Node data. Defaults to None.
+            flag (Type.flagtype, optional): Node flag. Defaults to None.
+            edges (Type.edgelist, optional): Node edges. Defaults to None.
+
+        Returns:
+            Node: Returns added node object when valid
+            Bool: Returns False when failed adding node
+        """
         if edges == None:
             edges = {}
         new_node = Node(data, flag, edges)
@@ -366,6 +462,16 @@ class Graph():
 
     # Removes nodes and all edges pointing to it
     def remove_node(self, id: Type.idtype):
+        """
+        Removes nodes and all edges pointing to it
+
+        Args:
+            id (Type.idtype): Id of the node to be removed
+
+        Returns:
+            Node: Node removed when valid
+            Bool: False when failed to find node
+        """
         try:
             Type.is_id(id)
             if id in self.nodes:
@@ -389,6 +495,12 @@ class Graph():
         return self.nodes
 
     def copy(self):
+        """
+        Returns deep copy (identical copy of object and its internal objects)
+
+        Returns:
+            Graph: New graph object identical to original
+        """
         return copy.deepcopy(self)
 
 # =============================================================================
