@@ -729,6 +729,7 @@ class Converter():
     def to_adjmatrix(graph: Graph, get_nodes=False):
         """
         Returns an equivalent adjacency matrix and node data list
+
         Args:
             graph (Graph): Graph to be converted
             get_nodes (bool, optional): Whether to get data list from 'node.data' . Defaults to False.
@@ -763,6 +764,7 @@ class Converter():
         """
         Returns an equivalent adjacency list and node data list
         Edges returned as tuples due to duck typing
+
         Args:
             graph (Graph): Graph to be converted
             get_nodes (bool, optional): Whether to get data list from 'node.data' . Defaults to False.
@@ -794,6 +796,7 @@ class Converter():
     def to_adjdict(graph: Graph, get_nodes=False):
         """
         Returns an equivalent adjacency dict and node data list
+
         Args:
             graph (Graph): Graph to be converted
             get_nodes (bool, optional): Whether to get data list from 'node.data' . Defaults to False.
