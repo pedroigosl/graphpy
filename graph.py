@@ -338,11 +338,6 @@ class Graph():
 
     @ classmethod
     def set_graph_id(cls):
-        """_summary_
-
-        Returns:
-            _type_: _description_
-        """
         cls.graph_count += 1
         return cls.graph_count - 1
 
@@ -508,10 +503,23 @@ class Graph():
 
 # Validators
 class Validator():
+    """
+    Validator class. Checks graph, nodes and edges to ensure all properties are
+    valid
+    """
 
     # Checks whether graph is valid
     @ staticmethod
     def is_graph(graph: Graph):
+        """
+        Validates the entire graph
+
+        Args:
+            graph (Graph): Graph to be checked
+
+        Returns:
+            Bool: Whether the graph is valid or not
+        """
         try:
             nodes = graph.nodes
 
@@ -533,11 +541,22 @@ class Validator():
             error_handler("Graph failed type check", "Type")
             return False
 
-    # Checks whether node is valid. Also used internally by Graph to check
-    # new nodes. Hence the adding parameter (shouldn't be used externally)
+    # Checks whether node is valid
     @ staticmethod
-    def check_node(node: Type.nodetype, graph: Graph, adding=False):
+    def check_node(node: Type.nodetype, graph: Graph, _adding=False):
+        """
+        Checks whether node is valid
+        Also used internally by Graph to check new nodes
+        Hence the adding parameter (shouldn't be used externally)
 
+        Args:
+            node (Type.nodetype): Node to be checked
+            graph (Graph): Graph to which node belongs
+            _adding (bool, optional): Used internally when adding new node. Defaults to False.
+
+        Returns:
+            Bool: Whether or not node is valid
+        """
         try:
             Type.is_node(node)
             check_type("graph", graph, Graph)
@@ -549,7 +568,7 @@ class Validator():
                 Type.is_edgelist(node.edges)
                 for key, weight in node.edges.items():
                     if key not in graph.nodes:
-                        if not (adding and key == graph.last_id + 1):
+                        if not (_adding and key == graph.last_id + 1):
                             error_handler("Edge node not in nodes", "Key")
                     Type.is_weight(weight)
             return True
@@ -562,11 +581,25 @@ class Validator():
 
 # Graph builders
 class Builder():
+    """
+    Graph building methods
+    """
 
     # Advanced method to build graph from adjacency matrix
     @ staticmethod
     def adj_matrix(adj_mat: Type.adjmatrixtype,
                    obj_list: List[Any] = None):
+        """
+        Advanced method to build graph from adjacency matrix
+
+        Args:
+            adj_mat (Type.adjmatrixtype): Source adjacency matrix
+            obj_list (List[Any], optional): Object list to go on 'node.data'. Defaults to None.
+
+        Returns:
+            Graph: Built and checked graph
+            Bool: False if failed building graph
+        """
         nodes = {}
 
         try:
@@ -591,6 +624,17 @@ class Builder():
     @ staticmethod
     def adj_list(adj_list: Type.adjlisttype,
                  obj_list: List[Any] = None):
+        """
+        Advanced method to build graph from adjacency list
+
+        Args:
+            adj_list (Type.adjlisttype): Source adjacency list
+            obj_list (List[Any], optional): Object list to go on 'node.data'. Defaults to None.
+
+        Returns:
+            Graph: Built and checked graph
+            Bool: False if failed building graph
+        """
         nodes = {}
 
         try:
@@ -609,10 +653,21 @@ class Builder():
             error_handler("Broken adjacency list", "Runtime")
             return False
 
-    # Advanced method to build graph from adjacency list
+    # Advanced method to build graph from adjacency dictionary
     @ staticmethod
     def adj_dict(adj_dict: Type.adjdicttype,
                  obj_list: List[Any] = None):
+        """
+        Advanced method to build graph from adjacency dictionary
+
+        Args:
+            adj_dict (Type.adjdicttype): Source adjacency dictionary
+            obj_list (List[Any], optional): Object list to go on 'node.data'. Defaults to None.
+
+        Returns:
+            Graph: Built and checked graph
+            Bool: False if failed building graph
+        """
         nodes = {}
 
         try:
@@ -629,8 +684,21 @@ class Builder():
             error_handler("Broken adjacency dictionary", "Runtime")
             return False
 
+    # Refactors graph to clean "waste"
     @ staticmethod
     def refactor(graph: Graph):
+        """
+        Refactors graph to clean "waste"
+        Clears node flags
+        Removes unused node ids
+
+        Args:
+            graph (Graph): Graph to be cleaned
+
+        Returns:
+            Graph: Refactored graph
+            Bool: False when failed to refactor
+        """
         try:
             Validator.is_graph(graph)
             new_nodes = {}
@@ -651,11 +719,25 @@ class Builder():
 # =============================================================================
 
 
+# Converts graphs to native data types
 class Converter():
-
+    """
+    Converts graphs to native data types for printing, exporting and all
+    """
     # Returns an equivalent adjacency matrix and node data list
     @ staticmethod
     def to_adjmatrix(graph: Graph, get_nodes=False):
+        """
+        Returns an equivalent adjacency matrix and node data list
+        Args:
+            graph (Graph): Graph to be converted
+            get_nodes (bool, optional): Whether to get data list from 'node.data' . Defaults to False.
+
+        Returns:
+            adjmatrixtype, list: Resulting adjacency matrix and data list
+            adjmatrixtype: Resulting adjacency matrix
+            Bool: False when failed to convert
+        """
         try:
             Validator.is_graph(graph)
             if not isinstance(get_nodes, bool):
@@ -678,6 +760,18 @@ class Converter():
 
     @ staticmethod
     def to_adjlist(graph: Graph, get_nodes=False):
+        """
+        Returns an equivalent adjacency list and node data list
+        Edges returned as tuples due to duck typing
+        Args:
+            graph (Graph): Graph to be converted
+            get_nodes (bool, optional): Whether to get data list from 'node.data' . Defaults to False.
+
+        Returns:
+            adjlisttype, list: Resulting adjacency list and data list
+            adjlisttype: Resulting adjacency list
+            Bool: False when failed to convert
+        """
         try:
             Validator.is_graph(graph)
             if not isinstance(get_nodes, bool):
@@ -698,6 +792,17 @@ class Converter():
 
     @ staticmethod
     def to_adjdict(graph: Graph, get_nodes=False):
+        """
+        Returns an equivalent adjacency dict and node data list
+        Args:
+            graph (Graph): Graph to be converted
+            get_nodes (bool, optional): Whether to get data list from 'node.data' . Defaults to False.
+
+        Returns:
+            adjdicttype, list: Resulting adjacency dict and data list
+            adjdicttype: Resulting adjacency dict
+            Bool: False when failed to convert
+        """
         try:
             Validator.is_graph(graph)
             if not isinstance(get_nodes, bool):
