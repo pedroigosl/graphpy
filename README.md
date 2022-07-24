@@ -313,7 +313,7 @@ adjmat = [[0, 1, 2],
 
 my_graph = Builder.adj_matrix(adjmat)
 ```
-3 - Now operate using its built in functions
+3. Now operate using its built in functions
 
 ```python
 my_graph.add_node(edges={0: 1, 5: 0})
