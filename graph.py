@@ -27,7 +27,7 @@ print(f"Session log started at {log_dir}{log_name}")
 warnings.simplefilter("always")
 
 # Import warning
-warning = f" This library is a work in progress and not yet functional"
+warning = f" This library is a work in progress and may work unexpectedly"
 
 warnings.warn(warning, ImportWarning)
 
