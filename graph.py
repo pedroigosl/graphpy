@@ -341,18 +341,18 @@ class Graph():
         cls.graph_count += 1
         return cls.graph_count - 1
 
-    # Adds edge main_id -> dest_id with weight when applicable
-    def add_edge(self, main_id: Type.idtype,
-                 dest_id: Type.idtype,
+    # Adds edge source_id -> target_id with weight when applicable
+    def add_edge(self, source_id: Type.idtype,
+                 target_id: Type.idtype,
                  weight: Type.weighttype = 0,
                  symmetric: bool = False):
         """
-        Adds edge main_id -> dest_id with weight when applicable
+        Adds edge source_id -> target_id with weight when applicable
         Adds edge symmetrically (if (a,b) in edges, then (b, a) also in edges)) when toggled
 
         Args:
-            main_id (Type.idtype): Edge origin node. Where edge is stored
-            dest_id (Type.idtype): Edge destiny node. Key on edges in node[main_id]
+            source_id (Type.idtype): Edge origin node. Where edge is stored
+            target_id (Type.idtype): Edge target node. Key on edges in node[source_id]
             weight (Type.weighttype, optional): Edge weight. Defaults to 0.
             symmetric (bool, optional): Whether edge is to be added symmetrically. Defaults to False.
 
@@ -360,59 +360,59 @@ class Graph():
             Bool: Whether edge was added or not
         """
         try:
-            Type.is_id(main_id)
-            Type.is_id(dest_id)
+            Type.is_id(source_id)
+            Type.is_id(target_id)
             Type.is_weight(weight)
             if not isinstance(symmetric, bool):
                 error_handler("Symmetric is not bool", "Type")
 
-            if not (main_id in self.nodes and dest_id in self.nodes):
+            if not (source_id in self.nodes and target_id in self.nodes):
                 error_handler("Edge id not found", "Key")
 
-            self.nodes[main_id].edges[dest_id] = weight
+            self.nodes[source_id].edges[target_id] = weight
             logging.info(
-                f" Edge ({main_id}->{dest_id} [{weight}]) added to graph #{self.graph_id}")
+                f" Edge ({source_id}->{target_id} [{weight}]) added to graph #{self.graph_id}")
             if VERBOSE:
                 logging.info(str(Converter.to_adjdict(self)))
             if symmetric:
-                self.add_edge(dest_id, main_id, weight)
+                self.add_edge(target_id, source_id, weight)
             return True
 
         except:
             error_handler("Edge's id(s) not in nodes", "Key")
             return False
 
-    def remove_edge(self, main_id: Type.idtype, dest_id: Type.idtype, symmetric: bool = False):
+    def remove_edge(self, source_id: Type.idtype, target_id: Type.idtype, symmetric: bool = False):
         """
-        Removes edge main_id -> dest_id
+        Removes edge source_id -> target_id
         Removes edge symmetrically (if (a,b) in edges, then (b, a) also in edges)) when toggled
 
         Args:
-            main_id (Type.idtype): Edge origin node. Where edge is stored
-            dest_id (Type.idtype): Edge destiny node. Key on edges in node[main_id]
+            source_id (Type.idtype): Edge origin node. Where edge is stored
+            target_id (Type.idtype): Edge target node. Key on edges in node[source_id]
             symmetric (bool, optional): Whether edge is to be removed symmetrically. Defaults to False.
 
         Returns:
             Bool: Whether edge was removed or not
         """
         try:
-            Type.is_id(main_id)
-            Type.is_id(dest_id)
+            Type.is_id(source_id)
+            Type.is_id(target_id)
             if not isinstance(symmetric, bool):
                 error_handler("Symmetric is not bool", "Type")
 
-            if not (main_id in self.nodes and dest_id in self.nodes):
+            if not (source_id in self.nodes and target_id in self.nodes):
                 error_handler("Edge id not found", "Key")
 
             if symmetric:
-                self.remove_edge(dest_id, main_id)
+                self.remove_edge(target_id, source_id)
 
-            node = self.nodes[main_id]
+            node = self.nodes[source_id]
             if node.edges:
-                if dest_id in node.edges:
-                    node.edges.pop(dest_id)
+                if target_id in node.edges:
+                    node.edges.pop(target_id)
                     logging.info(
-                        f" Edge ({main_id}->{dest_id}) removed from graph #{self.graph_id}")
+                        f" Edge ({source_id}->{target_id}) removed from graph #{self.graph_id}")
                     if VERBOSE:
                         logging.info(str(Converter.to_adjdict(self)))
                     return True
@@ -442,7 +442,7 @@ class Graph():
         new_node = Node(data, flag, edges)
         new_id = self.last_id + 1
         try:
-            Validator.check_node(new_node, self, adding=True)
+            Validator.check_node(new_node, self, _adding=True)
             self.nodes[new_id] = new_node
             self.last_id += 1
 
@@ -746,10 +746,10 @@ class Converter():
             adjmatrix = [[None for j in range(0, graph.last_id + 1)]
                          for i in range(0, graph.last_id + 1)]
             nodes = [None for i in range(0, graph.last_id + 1)]
-            for main_id, node in graph.nodes.items():
-                nodes[main_id] = node.data
-                for dest_id, weight in node.edges.items():
-                    adjmatrix[main_id][dest_id] = weight
+            for source_id, node in graph.nodes.items():
+                nodes[source_id] = node.data
+                for target_id, weight in node.edges.items():
+                    adjmatrix[source_id][target_id] = weight
 
             if get_nodes:
                 return adjmatrix, nodes
