@@ -110,6 +110,7 @@ ENV/
 env.bak/
 venv.bak/
 graphvenv/
+graphenv/
 
 # Spyder project settings
 .spyderproject
